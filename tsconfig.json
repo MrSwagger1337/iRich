@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/plugin-sdk" },
+    { "path": "./packages/renderer" },
+    { "path": "./packages/rich-text" },
+    { "path": "./packages/ui" },
+    { "path": "./packages/react" },
+    { "path": "./apps/docs" },
+    { "path": "./apps/playground" },
+    { "path": "./examples/nextjs-basic" },
+    { "path": "./examples/react-vite" }
+  ]
+}
