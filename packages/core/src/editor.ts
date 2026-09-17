@@ -17,6 +17,7 @@ import type {
   NodeId,
   UpdateNodePayload,
 } from './types';
+import type { ComponentRegistry } from './component';
 import {
   CommandExecutionError,
   DuplicateIdError,
@@ -41,6 +42,7 @@ export interface EditorInstance {
   getDocument(): IRichDocument;
   getSelection(): NodeId | null;
   getNode(nodeId: NodeId): IRichNode | undefined;
+  getRegistry(): ComponentRegistry | undefined;
   canUndo(): boolean;
   canRedo(): boolean;
   clearHistory(): void;
@@ -64,6 +66,7 @@ export interface EditorInstance {
 export class Editor implements EditorInstance {
   private state: EditorState;
   private history: HistoryManager;
+  private registry?: ComponentRegistry;
   private emitter = new EventEmitter();
   private stateSubscribers = new Set<(state: EditorState) => void>();
   private nodeSubscribers = new Map<NodeId, Set<(node: IRichNode | undefined) => void>>();
@@ -71,8 +74,9 @@ export class Editor implements EditorInstance {
 
   constructor(config: EditorConfig = {}) {
     const doc = config.initialDocument ?? createDocument();
+    this.registry = config.registry;
 
-    const validation = validateDocument(doc);
+    const validation = validateDocument(doc, { registry: this.registry });
     if (!validation.valid) {
       throw new ValidationError([...validation.errors]);
     }
@@ -105,6 +109,10 @@ export class Editor implements EditorInstance {
 
   public getNode(nodeId: NodeId): IRichNode | undefined {
     return findNodeById(this.state.document, nodeId);
+  }
+
+  public getRegistry(): ComponentRegistry | undefined {
+    return this.registry;
   }
 
   public canUndo(): boolean {
@@ -209,12 +217,25 @@ export class Editor implements EditorInstance {
   // --- COMMAND IMPLEMENTATIONS ---
 
   private executeInsertNode(payload: InsertNodePayload): NodeId {
-    const nodeToInsert = payload.node;
+    let nodeToInsert = payload.node;
     if (!nodeToInsert || !nodeToInsert.id || !nodeToInsert.type) {
       throw new CommandExecutionError(
         'Cannot insert invalid node structure.',
         'INVALID_NODE_STRUCTURE',
       );
+    }
+
+    if (this.registry && this.registry.has(nodeToInsert.type)) {
+      const defaultProps = this.registry.getDefaultProps(nodeToInsert.type);
+      if (Object.keys(defaultProps).length > 0) {
+        nodeToInsert = {
+          ...nodeToInsert,
+          props: {
+            ...defaultProps,
+            ...nodeToInsert.props,
+          },
+        };
+      }
     }
 
     const existingIds = collectAllNodeIds(this.state.document);

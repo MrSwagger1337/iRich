@@ -1,13 +1,13 @@
-/**
- * @irich/core
- * Document validation, JSON value inspection, and structural invariant checks.
- */
-
+import type { ComponentRegistry } from '../component';
 import type { IRichDocument, IRichNode } from '../types';
 
 export interface ValidationErrorDetail {
   path: string;
   message: string;
+}
+
+export interface ValidateDocumentOptions {
+  registry?: ComponentRegistry;
 }
 
 export interface ValidationResult {
@@ -73,8 +73,12 @@ export function isJSONValue(value: unknown, seen = new WeakSet<object>()): boole
 
 /**
  * Validates an iRich document against all canonical document model invariants.
+ * Optionally validates node types and prop schemas against a ComponentRegistry.
  */
-export function validateDocument(doc: unknown): ValidationResult {
+export function validateDocument(
+  doc: unknown,
+  options: ValidateDocumentOptions = {},
+): ValidationResult {
   const details: ValidationErrorDetail[] = [];
   const seenIds = new Set<string>();
 
@@ -167,6 +171,15 @@ export function validateDocument(doc: unknown): ValidationResult {
       candidateNode.type.trim() === ''
     ) {
       addError(`${path}.type`, 'Node must have a non-empty string "type".');
+    } else if (
+      options.registry &&
+      candidateNode.type !== 'root' &&
+      !options.registry.has(candidateNode.type)
+    ) {
+      addError(
+        `${path}.type`,
+        `Component type "${candidateNode.type}" is not registered in the provided ComponentRegistry.`,
+      );
     }
 
     // Validate Props
@@ -183,6 +196,21 @@ export function validateDocument(doc: unknown): ValidationResult {
         `${path}.props`,
         'Node "props" contains non-JSON serializable values (functions, undefined, circular references).',
       );
+    } else if (
+      options.registry &&
+      candidateNode.type &&
+      candidateNode.type !== 'root' &&
+      options.registry.has(candidateNode.type)
+    ) {
+      const propValidation = options.registry.validateProps(
+        candidateNode.type,
+        candidateNode.props as Record<string, unknown>,
+      );
+      if (!propValidation.valid) {
+        for (const err of propValidation.errors) {
+          addError(`${path}.props`, err);
+        }
+      }
     }
 
     // Validate Meta if present

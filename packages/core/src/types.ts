@@ -3,6 +3,8 @@
  * Canonical document types, JSON values, and editor interfaces.
  */
 
+import type { ComponentRegistry } from './component';
+
 export type JSONPrimitive = string | number | boolean | null;
 
 export interface JSONObject {
@@ -92,6 +94,7 @@ export interface EditorConfig {
   initialSelection?: NodeId | null;
   maxHistorySize?: number;
   enableHistory?: boolean;
+  registry?: ComponentRegistry;
 }
 
 /**

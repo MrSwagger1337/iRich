@@ -15,8 +15,8 @@ export interface CreateNodeOptions {
   type: string;
   id?: NodeId;
   props?: Record<string, JSONValue>;
-  children?: IRichNode[];
-  slots?: Record<string, IRichNode[]>;
+  children?: readonly IRichNode[] | IRichNode[];
+  slots?: Record<string, readonly IRichNode[] | IRichNode[]>;
   meta?: Record<string, JSONValue>;
 }
 

@@ -35,6 +35,9 @@ export {
   InvalidMoveError,
   ValidationError,
   CommandExecutionError,
+  DuplicateComponentError,
+  ComponentNotFoundError,
+  InvalidComponentError,
   type ErrorCode,
 } from './errors';
 
@@ -61,6 +64,7 @@ export {
   validateDocument,
   type ValidationResult,
   type ValidationErrorDetail,
+  type ValidateDocumentOptions,
 } from './utils/validation';
 
 // Events
@@ -73,6 +77,33 @@ export {
   type HistoryEntry,
   type HistoryOptions,
 } from './history';
+
+// Component & Field System
+export {
+  defineComponent,
+  createComponentRegistry,
+  BUILT_IN_FIELD_TYPES,
+  type ComponentDefinition,
+  type SlotDefinition,
+  type ComponentRegistry,
+  type RegisterComponentOptions,
+  type ComponentRegistryOptions,
+  type PropValidationResult,
+  type FieldType,
+  type BuiltInFieldType,
+  type BaseFieldDefinition,
+  type TextFieldDefinition,
+  type TextareaFieldDefinition,
+  type NumberFieldDefinition,
+  type BooleanFieldDefinition,
+  type SelectOption,
+  type SelectFieldDefinition,
+  type ColorFieldDefinition,
+  type CustomFieldDefinition,
+  type FieldDefinition,
+  type FieldValidationResult,
+  type FieldTypeDefinition,
+} from './component';
 
 // Editor Engine
 export { Editor, createEditor, type EditorInstance } from './editor';

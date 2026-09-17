@@ -14,7 +14,10 @@ export type ErrorCode =
   | 'INVALID_NODE_STRUCTURE'
   | 'NON_JSON_VALUE'
   | 'VALIDATION_FAILED'
-  | 'COMMAND_FAILED';
+  | 'COMMAND_FAILED'
+  | 'DUPLICATE_COMPONENT'
+  | 'COMPONENT_NOT_FOUND'
+  | 'INVALID_COMPONENT_DEFINITION';
 
 /**
  * Base class for all iRich engine errors.
@@ -95,5 +98,41 @@ export class ValidationError extends IRichError {
 export class CommandExecutionError extends IRichError {
   constructor(message: string, code: ErrorCode = 'COMMAND_FAILED') {
     super(message, code);
+  }
+}
+
+/**
+ * Thrown when attempting to register a component whose type is already registered without allowOverride.
+ */
+export class DuplicateComponentError extends IRichError {
+  public readonly componentType: string;
+
+  constructor(componentType: string, details?: string) {
+    super(
+      `Component type "${componentType}" is already registered.${details ? ` ${details}` : ''}`,
+      'DUPLICATE_COMPONENT',
+    );
+    this.componentType = componentType;
+  }
+}
+
+/**
+ * Thrown when attempting to access an unregistered component type.
+ */
+export class ComponentNotFoundError extends IRichError {
+  public readonly componentType: string;
+
+  constructor(componentType: string) {
+    super(`Component type "${componentType}" was not found in the registry.`, 'COMPONENT_NOT_FOUND');
+    this.componentType = componentType;
+  }
+}
+
+/**
+ * Thrown when a component definition is invalid or malformed.
+ */
+export class InvalidComponentError extends IRichError {
+  constructor(message: string) {
+    super(message, 'INVALID_COMPONENT_DEFINITION');
   }
 }
