@@ -153,6 +153,7 @@ export interface EditorCommands {
   moveNode(payload: MoveNodePayload): void;
   duplicateNode(payload: DuplicateNodePayload | NodeId): NodeId;
   selectNode(nodeId: NodeId | null): void;
+  clearSelection(): void;
   hoverNode(nodeId: NodeId | null): void;
   undo(): boolean;
   redo(): boolean;

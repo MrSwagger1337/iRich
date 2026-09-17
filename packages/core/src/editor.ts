@@ -200,6 +200,9 @@ export class Editor implements EditorInstance {
     selectNode: (nodeId: NodeId | null): void => {
       this.executeSelectNode(nodeId);
     },
+    clearSelection: (): void => {
+      this.executeSelectNode(null);
+    },
     hoverNode: (nodeId: NodeId | null): void => {
       this.executeHoverNode(nodeId);
     },
