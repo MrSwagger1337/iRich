@@ -1,16 +1,15 @@
 import type { ReactNode } from 'react';
+import './globals.css';
 
 export const metadata = {
-  title: 'iRich Playground',
-  description: 'Interactive editor & visual canvas playground for iRich',
+  title: 'iRich Visual Editor Playground',
+  description: 'Interactive visual page builder and component canvas playground for iRich',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

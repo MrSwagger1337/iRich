@@ -1,24 +1,38 @@
 'use client';
 
-import { IRichProvider, IRichEditor } from '@irich/react';
+import React, { useMemo, useState } from 'react';
+import { IRichProvider } from '@irich/react';
+import { Canvas } from './components/canvas';
+import { Inspector } from './components/inspector';
+import { Palette } from './components/palette';
+import { createPlaygroundRegistry } from './components/registry';
+import { createPlaygroundSampleDocument } from './components/sample-document';
+import { Toolbar, type ViewportMode } from './components/toolbar';
 
 export default function PlaygroundPage() {
+  const [viewport, setViewport] = useState<ViewportMode>('desktop');
+
+  const registry = useMemo(() => createPlaygroundRegistry(), []);
+  const initialDocument = useMemo(() => createPlaygroundSampleDocument(), []);
+
   return (
-    <main style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
-      <h1>iRich Editor Playground</h1>
-      <p>Live sandbox environment for iRich components and plugins.</p>
-      <div
-        style={{
-          marginTop: '1.5rem',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '1.5rem',
-        }}
-      >
-        <IRichProvider>
-          <IRichEditor />
-        </IRichProvider>
+    <IRichProvider initialDocument={initialDocument} config={{ registry }}>
+      <div className="irich-app-container">
+        {/* Top Header Toolbar */}
+        <Toolbar viewport={viewport} onViewportChange={setViewport} />
+
+        {/* 3-Column Editor Shell */}
+        <div className="irich-main-workspace">
+          {/* Left: Component Palette */}
+          <Palette />
+
+          {/* Center: Central Canvas */}
+          <Canvas viewport={viewport} />
+
+          {/* Right: Property Inspector */}
+          <Inspector />
+        </div>
       </div>
-    </main>
+    </IRichProvider>
   );
 }

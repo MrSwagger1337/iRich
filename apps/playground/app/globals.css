@@ -1,0 +1,982 @@
+/**
+ * iRich Visual Editor Playground - Modern Developer Tool Theme
+ */
+
+:root {
+  --bg-app: #090d16;
+  --bg-sidebar: #0f172a;
+  --bg-sidebar-hover: #1e293b;
+  --bg-card: #131d31;
+  --bg-paper: #0b1120;
+  --bg-input: #1e293b;
+  --bg-input-focus: #243248;
+
+  --border-subtle: #1e293b;
+  --border-strong: #334155;
+  --border-focus: #6366f1;
+
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-glow: rgba(99, 102, 241, 0.25);
+
+  --accent-cyan: #38bdf8;
+  --accent-emerald: #10b981;
+  --accent-rose: #f43f5e;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-selected: 0 0 0 2px #6366f1, 0 0 16px rgba(99, 102, 241, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  user-select: none;
+}
+
+/* App Shell Layout */
+.irich-app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--bg-app);
+}
+
+.irich-main-workspace {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  height: calc(100vh - 54px);
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Top Toolbar
+   ========================================================================== */
+.irich-toolbar {
+  height: 54px;
+  background-color: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 10;
+}
+
+.irich-toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.irich-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.irich-brand-logo {
+  color: var(--accent-cyan);
+  font-size: 18px;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.5));
+}
+
+.irich-brand-name {
+  font-size: 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.irich-brand-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.irich-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background-color: var(--border-subtle);
+  margin: 0 6px;
+}
+
+.irich-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Buttons */
+.irich-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.irich-tool-btn:hover:not(:disabled) {
+  background-color: var(--bg-sidebar-hover);
+  color: var(--text-main);
+  border-color: var(--border-subtle);
+}
+
+.irich-tool-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.irich-tool-btn-highlight {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--accent-cyan);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.irich-tool-btn-sm {
+  padding: 4px 6px;
+  font-size: 11px;
+}
+
+.irich-tool-btn-danger:hover {
+  background-color: rgba(244, 63, 94, 0.15);
+  color: var(--accent-rose);
+  border-color: rgba(244, 63, 94, 0.3);
+}
+
+/* Viewport Switcher */
+.irich-viewport-switcher {
+  display: flex;
+  background-color: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.irich-viewport-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--text-subtle);
+  border: none;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.irich-viewport-btn:hover {
+  color: var(--text-muted);
+}
+
+.irich-viewport-btn.active {
+  background-color: var(--bg-sidebar);
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ==========================================================================
+   Sidebar: Palette (Left) & Inspector (Right)
+   ========================================================================== */
+.irich-sidebar {
+  background-color: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.irich-palette-sidebar {
+  border-right: 1px solid var(--border-subtle);
+}
+
+.irich-inspector-sidebar {
+  border-left: 1px solid var(--border-subtle);
+}
+
+.irich-sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.irich-sidebar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.irich-sidebar-subtitle {
+  font-size: 11px;
+  color: var(--text-subtle);
+  margin-top: 2px;
+  display: block;
+}
+
+.irich-palette-scroll,
+.irich-inspector-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.irich-palette-category {
+  margin-bottom: 20px;
+}
+
+.irich-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.irich-category-name {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-subtle);
+}
+
+.irich-category-count {
+  font-size: 10px;
+  background-color: var(--border-subtle);
+  color: var(--text-muted);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.irich-palette-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.irich-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.irich-palette-item:hover {
+  background-color: var(--bg-sidebar-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.irich-palette-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.irich-palette-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.irich-palette-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.irich-palette-item-desc {
+  font-size: 11px;
+  color: var(--text-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.irich-palette-add-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: var(--border-subtle);
+  color: var(--text-muted);
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.irich-palette-item:hover .irich-palette-add-btn {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ==========================================================================
+   Inspector (Right Sidebar)
+   ========================================================================== */
+.irich-inspector-header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 14px;
+}
+
+.irich-inspector-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.irich-inspector-type-badge {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.irich-inspector-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.irich-inspector-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.irich-inspector-id-label {
+  color: var(--text-subtle);
+}
+
+.irich-inspector-id-value {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  color: var(--accent-cyan);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.irich-inspector-id-value:hover {
+  background: var(--bg-sidebar-hover);
+}
+
+.irich-inspector-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-subtle);
+  margin-bottom: 12px;
+}
+
+.irich-form-field {
+  margin-bottom: 14px;
+}
+
+.irich-form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.irich-required-star {
+  color: var(--accent-rose);
+  margin-left: 2px;
+}
+
+.irich-input {
+  width: 100%;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  padding: 8px 10px;
+  font-size: 12px;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.irich-input:focus {
+  background-color: var(--bg-input-focus);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.irich-textarea {
+  resize: vertical;
+  min-height: 64px;
+  line-height: 1.4;
+}
+
+.irich-select {
+  cursor: pointer;
+}
+
+.irich-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.irich-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Inspector Empty State */
+.irich-inspector-empty {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.irich-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.irich-empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.irich-empty-desc {
+  font-size: 12px;
+  color: var(--text-subtle);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.irich-sidebar-divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border-subtle);
+  margin-bottom: 16px;
+}
+
+.irich-outline-section {
+  width: 100%;
+  text-align: left;
+}
+
+.irich-outline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.irich-outline-item {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.irich-outline-item:hover {
+  background-color: var(--bg-sidebar-hover);
+  color: var(--text-main);
+}
+
+.irich-outline-item.active {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.irich-outline-type {
+  font-weight: 600;
+}
+
+.irich-outline-id {
+  font-size: 10px;
+  color: var(--text-subtle);
+  margin-left: auto;
+}
+
+/* ==========================================================================
+   Central Canvas Area
+   ========================================================================== */
+.irich-canvas-viewport {
+  flex: 1;
+  background-color: var(--bg-app);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px;
+  position: relative;
+}
+
+.irich-canvas-device-bar {
+  margin-bottom: 16px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.irich-canvas-frame {
+  max-width: 100%;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.irich-canvas-frame-tablet,
+.irich-canvas-frame-mobile {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.irich-canvas-paper {
+  background-color: var(--bg-paper);
+  min-height: 600px;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  padding: 10px;
+}
+
+/* ==========================================================================
+   Canvas Node Wrapper & Selection Outline
+   ========================================================================== */
+.irich-canvas-node {
+  position: relative;
+  outline: 1px solid transparent;
+  transition: outline 0.1s ease, box-shadow 0.1s ease;
+  cursor: pointer;
+}
+
+.irich-canvas-node:hover {
+  outline: 1px dashed rgba(56, 189, 248, 0.5);
+}
+
+.irich-canvas-node-selected {
+  outline: 2px solid var(--primary) !important;
+  box-shadow: var(--shadow-selected);
+  border-radius: 4px;
+}
+
+.irich-node-badge {
+  display: none;
+  position: absolute;
+  top: -22px;
+  left: 0;
+  background: var(--primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px 3px 0 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.irich-canvas-node-selected > .irich-node-badge {
+  display: block;
+}
+
+/* ==========================================================================
+   Rendered Component Styles
+   ========================================================================== */
+.irich-container-node {
+  width: 100%;
+}
+
+.irich-container-inner {
+  border-radius: var(--radius-md);
+}
+
+.bg-transparent { background: transparent; }
+.bg-subtle { background: rgba(30, 41, 59, 0.4); border: 1px solid var(--border-subtle); }
+.bg-card { background: var(--bg-card); border: 1px solid var(--border-strong); box-shadow: var(--shadow-md); }
+
+.irich-layout-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.irich-layout-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.irich-layout-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .irich-layout-grid-2,
+  .irich-layout-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Headings */
+.irich-heading {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.irich-heading-h1 { font-size: 2.5rem; line-height: 1.2; }
+.irich-heading-h2 { font-size: 2rem; line-height: 1.3; }
+.irich-heading-h3 { font-size: 1.5rem; line-height: 1.4; }
+.irich-heading-h4 { font-size: 1.2rem; line-height: 1.4; }
+
+/* Text */
+.irich-text-sm { font-size: 14px; }
+.irich-text-md { font-size: 16px; }
+.irich-text-lg { font-size: 18px; }
+.irich-text-lead { font-size: 20px; line-height: 1.6; }
+
+.irich-text-primary { color: #f8fafc; }
+.irich-text-muted { color: #94a3b8; }
+.irich-text-accent { color: var(--accent-cyan); }
+
+/* Buttons */
+.irich-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.irich-btn-sm { padding: 6px 12px; font-size: 12px; }
+.irich-btn-md { padding: 8px 16px; font-size: 14px; }
+.irich-btn-lg { padding: 12px 24px; font-size: 16px; }
+
+.irich-btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
+}
+
+.irich-btn-primary:hover {
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.6);
+  transform: translateY(-1px);
+}
+
+.irich-btn-secondary {
+  background-color: var(--bg-sidebar-hover);
+  color: #fff;
+  border-color: var(--border-strong);
+}
+
+.irich-btn-secondary:hover {
+  background-color: var(--border-strong);
+}
+
+.irich-btn-outline {
+  background: transparent;
+  color: #fff;
+  border-color: var(--border-strong);
+}
+
+.irich-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #fff;
+}
+
+.irich-btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.irich-btn-ghost:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Cards */
+.irich-card {
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.2s ease;
+}
+
+.irich-card-elevated {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-subtle);
+}
+
+.irich-card-elevated:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.irich-card-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-cyan);
+  background: rgba(56, 189, 248, 0.12);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.irich-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.irich-card-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Hero */
+.irich-hero {
+  padding: 60px 24px;
+  border-radius: var(--radius-xl);
+  background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+  margin-bottom: 20px;
+}
+
+.irich-hero-center { text-align: center; }
+.irich-hero-left { text-align: left; }
+
+.irich-hero-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+
+.irich-hero-title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 16px;
+  line-height: 1.15;
+}
+
+.irich-hero-subtitle {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  max-width: 680px;
+  margin: 0 auto 28px auto;
+  line-height: 1.6;
+}
+
+.irich-hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Modal (JSON Inspection)
+   ========================================================================== */
+.irich-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.irich-modal-card {
+  background-color: var(--bg-sidebar);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 720px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.irich-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.irich-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.irich-badge-version {
+  font-size: 11px;
+  background: var(--bg-card);
+  color: var(--accent-cyan);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.irich-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.irich-modal-code {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e2e8f0;
+  background-color: #060911;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-subtle);
+}
