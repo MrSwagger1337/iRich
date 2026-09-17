@@ -30,7 +30,15 @@
   "dependencies": {
     "@irich/core": "workspace:*"
   },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
   "devDependencies": {
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "tsup": "^8.3.6",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"

@@ -1,40 +1,39 @@
 /**
  * @irich/renderer
- * Block and node rendering abstractions for iRich documents.
+ * Lightweight, SSR-compatible React renderer for iRich documents.
+ * Completely decoupled from visual editor controls, canvas drag/drop, and property inspectors.
  */
 
-import type { IRichDocument, IRichNode } from '@irich/core';
+// Core types re-export
+export type { IRichDocument, IRichNode, NodeId, JSONValue } from '@irich/core';
 
-export type NodeComponent<P = Record<string, unknown>> = (props: P) => unknown;
+// Renderer Components & Functions
+export { IRichRenderer, renderDocument } from './renderer';
+export { RenderNode, renderNode, type RenderOptions } from './render-node';
+export { RendererRegistry, createRenderer } from './registry';
+export { DefaultUnknownComponent } from './fallback';
 
-export class RendererRegistry {
-  private components = new Map<string, NodeComponent>();
+// Example Document & Reference Components
+export {
+  exampleDocument,
+  exampleComponents,
+  PageComponent,
+  HeroComponent,
+  ContainerComponent,
+  CardComponent,
+  type PageProps,
+  type HeroProps,
+  type ContainerProps,
+  type CardProps,
+} from './example';
 
-  register(type: string, component: NodeComponent): void {
-    this.components.set(type, component);
-  }
-
-  get(type: string): NodeComponent | undefined {
-    return this.components.get(type);
-  }
-
-  has(type: string): boolean {
-    return this.components.has(type);
-  }
-}
-
-export function renderNodeTree<T>(
-  node: IRichNode,
-  renderFn: (node: IRichNode, children: T[]) => T,
-): T {
-  const renderedChildren: T[] = (node.children ?? []).map((child: IRichNode) =>
-    renderNodeTree(child, renderFn),
-  );
-  return renderFn(node, renderedChildren);
-}
-
-export function createRenderer(): RendererRegistry {
-  return new RendererRegistry();
-}
-
-export type { IRichDocument, IRichNode };
+// Types
+export type {
+  NodeRendererProps,
+  ComponentRenderer,
+  ComponentMap,
+  UnknownComponentProps,
+  UnknownComponentBehavior,
+  IRichRendererProps,
+  RenderNodeProps,
+} from './types';
