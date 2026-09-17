@@ -1,63 +1,70 @@
 /**
  * @irich/core
- * Core data structures, state machine, and engine for iRich.
+ * Embeddable, extensible visual content editor and page builder engine.
+ * Pure TypeScript, zero React/DOM runtime dependencies.
  */
 
 export const VERSION = '0.1.0';
 
-export type NodeId = string;
+// Canonical Types
+export type {
+  JSONPrimitive,
+  JSONObject,
+  JSONArray,
+  JSONValue,
+  NodeId,
+  IRichNode,
+  IRichDocument,
+  EditorState,
+  EditorConfig,
+  EditorCommands,
+  InsertNodePayload,
+  RemoveNodePayload,
+  UpdateNodePayload,
+  MoveNodePayload,
+  DuplicateNodePayload,
+  EditorEventMap,
+  EditorEventListener,
+} from './types';
 
-export interface IRichNode {
-  id: NodeId;
-  type: string;
-  props?: Record<string, unknown>;
-  children?: IRichNode[];
-}
+// Error Classes
+export {
+  IRichError,
+  DuplicateIdError,
+  NodeNotFoundError,
+  InvalidMoveError,
+  ValidationError,
+  CommandExecutionError,
+  type ErrorCode,
+} from './errors';
 
-export interface IRichDocument {
-  version: string;
-  root: IRichNode;
-  metadata?: Record<string, unknown>;
-}
+// Utilities
+export { generateId, isValidId } from './utils/id';
+export {
+  CURRENT_DOCUMENT_VERSION,
+  createNode,
+  createDocument,
+  cloneNode,
+  walkDocument,
+  findNode,
+  findNodeById,
+  findParent,
+  isDescendantOf,
+  collectAllNodeIds,
+  type CreateNodeOptions,
+  type CreateDocumentOptions,
+  type WalkContext,
+  type ParentLocation,
+} from './utils/tree';
+export {
+  isJSONValue,
+  validateDocument,
+  type ValidationResult,
+  type ValidationErrorDetail,
+} from './utils/validation';
 
-export interface EditorState {
-  document: IRichDocument;
-  selection: NodeId | null;
-}
+// Events
+export { EventEmitter } from './events';
 
-export interface EditorConfig {
-  initialDocument?: IRichDocument;
-}
-
-export class Editor {
-  private state: EditorState;
-
-  constructor(config: EditorConfig = {}) {
-    this.state = {
-      document: config.initialDocument ?? {
-        version: VERSION,
-        root: {
-          id: 'root',
-          type: 'root',
-          children: [],
-        },
-      },
-      selection: null,
-    };
-  }
-
-  getState(): EditorState {
-    return this.state;
-  }
-
-  getDocument(): IRichDocument {
-    return this.state.document;
-  }
-
-  select(id: NodeId | null): void {
-    this.state = {
-      ...this.state,
-      selection: id,
-    };
-  }
-}
+// Editor Engine
+export { Editor, createEditor, type EditorInstance } from './editor';

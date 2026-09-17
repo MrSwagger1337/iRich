@@ -17,6 +17,7 @@ describe('@irich/renderer', () => {
     const node: IRichNode = {
       id: '1',
       type: 'container',
+      props: {},
       children: [
         { id: '2', type: 'text', props: { text: 'Hello' } },
         { id: '3', type: 'text', props: { text: 'World' } },
