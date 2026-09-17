@@ -80,6 +80,8 @@ export interface EditorState {
   readonly document: IRichDocument;
   readonly selection: NodeId | null;
   readonly hoveredNodeId: NodeId | null;
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
 }
 
 /**
@@ -88,6 +90,8 @@ export interface EditorState {
 export interface EditorConfig {
   initialDocument?: IRichDocument;
   initialSelection?: NodeId | null;
+  maxHistorySize?: number;
+  enableHistory?: boolean;
 }
 
 /**
@@ -147,6 +151,8 @@ export interface EditorCommands {
   duplicateNode(payload: DuplicateNodePayload | NodeId): NodeId;
   selectNode(nodeId: NodeId | null): void;
   hoverNode(nodeId: NodeId | null): void;
+  undo(): boolean;
+  redo(): boolean;
   batch(callback: () => void): void;
 }
 
@@ -189,6 +195,14 @@ export interface EditorEventMap {
   'selection:change': {
     selection: NodeId | null;
     previousSelection: NodeId | null;
+  };
+  'history:undo': {
+    document: IRichDocument;
+    selection: NodeId | null;
+  };
+  'history:redo': {
+    document: IRichDocument;
+    selection: NodeId | null;
   };
 }
 

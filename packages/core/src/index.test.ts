@@ -581,4 +581,269 @@ describe('@irich/core', () => {
       expect(rootBefore.children![0]).not.toBe(rootAfter.children![0]);
     });
   });
+
+  describe('History & Undo/Redo Engine', () => {
+    it('initializes with empty history stacks and canUndo/canRedo = false', () => {
+      const editor = createEditor();
+      expect(editor.canUndo()).toBe(false);
+      expect(editor.canRedo()).toBe(false);
+      expect(editor.getState().canUndo).toBe(false);
+      expect(editor.getState().canRedo).toBe(false);
+
+      expect(editor.commands.undo()).toBe(false);
+      expect(editor.commands.redo()).toBe(false);
+    });
+
+    it('records insertNode in history and supports undo and redo', () => {
+      const editor = createEditor();
+      const node = createNode({ id: 'btn-1', type: 'Button', props: { label: 'Click' } });
+
+      editor.commands.insertNode({ node });
+
+      expect(editor.getDocument().root.children).toHaveLength(1);
+      expect(editor.canUndo()).toBe(true);
+      expect(editor.canRedo()).toBe(false);
+
+      // Undo insertion
+      const undone = editor.commands.undo();
+      expect(undone).toBe(true);
+      expect(editor.getDocument().root.children).toHaveLength(0);
+      expect(editor.canUndo()).toBe(false);
+      expect(editor.canRedo()).toBe(true);
+
+      // Redo insertion
+      const redone = editor.commands.redo();
+      expect(redone).toBe(true);
+      expect(editor.getDocument().root.children).toHaveLength(1);
+      expect(editor.getDocument().root.children?.[0].id).toBe('btn-1');
+      expect(editor.canUndo()).toBe(true);
+      expect(editor.canRedo()).toBe(false);
+    });
+
+    it('undoes and redoes removeNode restoring removed node and children', () => {
+      const childNode = createNode({ id: 'inner', type: 'Text', props: { text: 'Inner' } });
+      const parentNode = createNode({ id: 'card', type: 'Card', props: {}, children: [childNode] });
+
+      const editor = createEditor({
+        initialDocument: createDocument({
+          root: {
+            children: [parentNode],
+          },
+        }),
+      });
+
+      expect(editor.getDocument().root.children).toHaveLength(1);
+
+      // Remove the card
+      editor.commands.removeNode('card');
+      expect(editor.getDocument().root.children).toHaveLength(0);
+      expect(editor.canUndo()).toBe(true);
+
+      // Undo removal
+      editor.commands.undo();
+      expect(editor.getDocument().root.children).toHaveLength(1);
+      const restoredCard = editor.getNode('card');
+      expect(restoredCard).toBeDefined();
+      expect(restoredCard?.children).toHaveLength(1);
+      expect(restoredCard?.children?.[0].id).toBe('inner');
+
+      // Redo removal
+      editor.commands.redo();
+      expect(editor.getDocument().root.children).toHaveLength(0);
+    });
+
+    it('undoes and redoes updateNode restoring previous props and meta', () => {
+      const node = createNode({ id: 'h1', type: 'Heading', props: { text: 'Original' }, meta: { locked: false } });
+      const editor = createEditor({
+        initialDocument: createDocument({
+          root: { children: [node] },
+        }),
+      });
+
+      editor.commands.updateNode({
+        nodeId: 'h1',
+        props: { text: 'Modified' },
+        meta: { locked: true },
+      });
+
+      expect(editor.getNode('h1')?.props.text).toBe('Modified');
+      expect(editor.getNode('h1')?.meta?.locked).toBe(true);
+
+      // Undo update
+      editor.commands.undo();
+      expect(editor.getNode('h1')?.props.text).toBe('Original');
+      expect(editor.getNode('h1')?.meta?.locked).toBe(false);
+
+      // Redo update
+      editor.commands.redo();
+      expect(editor.getNode('h1')?.props.text).toBe('Modified');
+      expect(editor.getNode('h1')?.meta?.locked).toBe(true);
+    });
+
+    it('undoes and redoes moveNode restoring original parent and slot location', () => {
+      const item = createNode({ id: 'item-1', type: 'Text', props: {} });
+      const containerA = createNode({ id: 'box-a', type: 'Box', children: [item] });
+      const containerB = createNode({ id: 'box-b', type: 'Box', slots: { main: [] } });
+
+      const editor = createEditor({
+        initialDocument: createDocument({
+          root: { children: [containerA, containerB] },
+        }),
+      });
+
+      // Move item from Box A to Box B slot "main"
+      editor.commands.moveNode({
+        nodeId: 'item-1',
+        targetParentId: 'box-b',
+        targetSlot: 'main',
+      });
+
+      expect(editor.getNode('box-a')?.children).toHaveLength(0);
+      expect(editor.getNode('box-b')?.slots?.main).toHaveLength(1);
+
+      // Undo move
+      editor.commands.undo();
+      expect(editor.getNode('box-a')?.children).toHaveLength(1);
+      expect(editor.getNode('box-a')?.children?.[0].id).toBe('item-1');
+      expect(editor.getNode('box-b')?.slots?.main).toHaveLength(0);
+
+      // Redo move
+      editor.commands.redo();
+      expect(editor.getNode('box-a')?.children).toHaveLength(0);
+      expect(editor.getNode('box-b')?.slots?.main).toHaveLength(1);
+    });
+
+    it('undoes and redoes duplicateNode', () => {
+      const editor = createEditor({
+        initialDocument: createDocument({
+          root: {
+            children: [createNode({ id: 'item-1', type: 'Text', props: { text: 'Item' } })],
+          },
+        }),
+      });
+
+      const dupId = editor.commands.duplicateNode('item-1');
+      expect(editor.getDocument().root.children).toHaveLength(2);
+
+      // Undo duplicate
+      editor.commands.undo();
+      expect(editor.getDocument().root.children).toHaveLength(1);
+      expect(editor.getNode(dupId)).toBeUndefined();
+
+      // Redo duplicate
+      editor.commands.redo();
+      expect(editor.getDocument().root.children).toHaveLength(2);
+      expect(editor.getNode(dupId)).toBeDefined();
+    });
+
+    it('clears redo stack when a new mutation is performed after undo', () => {
+      const editor = createEditor();
+
+      editor.commands.insertNode({ node: createNode({ id: 'n1', type: 'Text', props: {} }) });
+      editor.commands.insertNode({ node: createNode({ id: 'n2', type: 'Text', props: {} }) });
+
+      expect(editor.canUndo()).toBe(true);
+      expect(editor.canRedo()).toBe(false);
+
+      // Undo 1 step
+      editor.commands.undo();
+      expect(editor.canRedo()).toBe(true);
+
+      // Perform a new mutation
+      editor.commands.insertNode({ node: createNode({ id: 'n3', type: 'Text', props: {} }) });
+
+      // Redo stack must be cleared
+      expect(editor.canRedo()).toBe(false);
+      expect(editor.commands.redo()).toBe(false);
+    });
+
+    it('enforces maximum history size by evicting oldest entries', () => {
+      const editor = createEditor({
+        maxHistorySize: 3,
+      });
+
+      editor.commands.insertNode({ node: createNode({ id: 'n1', type: 'Text', props: {} }) });
+      editor.commands.insertNode({ node: createNode({ id: 'n2', type: 'Text', props: {} }) });
+      editor.commands.insertNode({ node: createNode({ id: 'n3', type: 'Text', props: {} }) });
+      editor.commands.insertNode({ node: createNode({ id: 'n4', type: 'Text', props: {} }) });
+      editor.commands.insertNode({ node: createNode({ id: 'n5', type: 'Text', props: {} }) });
+
+      // Only 3 undos are possible due to maxHistorySize: 3
+      expect(editor.commands.undo()).toBe(true); // removes n5
+      expect(editor.commands.undo()).toBe(true); // removes n4
+      expect(editor.commands.undo()).toBe(true); // removes n3
+      expect(editor.commands.undo()).toBe(false); // cannot undo further, n1 and n2 remain
+      expect(editor.getDocument().root.children).toHaveLength(2);
+    });
+
+    it('emits document:change and history events on undo and redo', () => {
+      const editor = createEditor();
+      const docChangeSpy = vi.fn();
+      const undoSpy = vi.fn();
+      const redoSpy = vi.fn();
+
+      editor.on('document:change', docChangeSpy);
+      editor.on('history:undo', undoSpy);
+      editor.on('history:redo', redoSpy);
+
+      editor.commands.insertNode({ node: createNode({ id: 'n1', type: 'Text', props: {} }) });
+      expect(docChangeSpy).toHaveBeenCalledTimes(1);
+
+      editor.commands.undo();
+      expect(undoSpy).toHaveBeenCalledTimes(1);
+      expect(docChangeSpy).toHaveBeenCalledTimes(2);
+
+      editor.commands.redo();
+      expect(redoSpy).toHaveBeenCalledTimes(1);
+      expect(docChangeSpy).toHaveBeenCalledTimes(3);
+    });
+
+    it('does not create history entries on no-op operations', () => {
+      const editor = createEditor({
+        initialDocument: createDocument({
+          root: { children: [createNode({ id: 'n1', type: 'Text', props: { text: 'Hello' } })] },
+        }),
+      });
+
+      expect(editor.canUndo()).toBe(false);
+
+      // No-op update (empty payload)
+      editor.commands.updateNode({ nodeId: 'n1' });
+      expect(editor.canUndo()).toBe(false);
+    });
+
+    it('undoes and redoes batched operations in a single history step', () => {
+      const editor = createEditor();
+
+      editor.commands.batch(() => {
+        editor.commands.insertNode({ node: createNode({ id: 'b1', type: 'Text', props: {} }) });
+        editor.commands.insertNode({ node: createNode({ id: 'b2', type: 'Text', props: {} }) });
+        editor.commands.insertNode({ node: createNode({ id: 'b3', type: 'Text', props: {} }) });
+      });
+
+      expect(editor.getDocument().root.children).toHaveLength(3);
+      expect(editor.canUndo()).toBe(true);
+
+      // 1 single undo reverses all 3 inserts
+      const undone = editor.commands.undo();
+      expect(undone).toBe(true);
+      expect(editor.getDocument().root.children).toHaveLength(0);
+      expect(editor.canUndo()).toBe(false);
+
+      // 1 single redo restores all 3 inserts
+      editor.commands.redo();
+      expect(editor.getDocument().root.children).toHaveLength(3);
+    });
+
+    it('clears history completely with clearHistory', () => {
+      const editor = createEditor();
+      editor.commands.insertNode({ node: createNode({ id: 'n1', type: 'Text', props: {} }) });
+      expect(editor.canUndo()).toBe(true);
+
+      editor.clearHistory();
+      expect(editor.canUndo()).toBe(false);
+      expect(editor.canRedo()).toBe(false);
+      expect(editor.getState().canUndo).toBe(false);
+    });
+  });
 });

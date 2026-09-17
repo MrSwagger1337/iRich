@@ -66,5 +66,13 @@ export {
 // Events
 export { EventEmitter } from './events';
 
+// History
+export {
+  HistoryManager,
+  DEFAULT_MAX_HISTORY_SIZE,
+  type HistoryEntry,
+  type HistoryOptions,
+} from './history';
+
 // Editor Engine
 export { Editor, createEditor, type EditorInstance } from './editor';

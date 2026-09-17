@@ -1,6 +1,6 @@
 /**
  * @irich/core
- * Core Editor instance, command pipeline, state management, and subscriptions.
+ * Core Editor instance, command pipeline, state management, history, and subscriptions.
  */
 
 import type {
@@ -25,6 +25,7 @@ import {
   ValidationError,
 } from './errors';
 import { EventEmitter } from './events';
+import { HistoryManager } from './history';
 import {
   cloneNode,
   collectAllNodeIds,
@@ -40,21 +41,33 @@ export interface EditorInstance {
   getDocument(): IRichDocument;
   getSelection(): NodeId | null;
   getNode(nodeId: NodeId): IRichNode | undefined;
+  canUndo(): boolean;
+  canRedo(): boolean;
+  clearHistory(): void;
   commands: EditorCommands;
-  on<K extends keyof EditorEventMap>(event: K, listener: EditorEventListener<K>): () => void;
-  off<K extends keyof EditorEventMap>(event: K, listener: EditorEventListener<K>): void;
+  on<K extends keyof EditorEventMap>(
+    event: K,
+    listener: EditorEventListener<K>,
+  ): () => void;
+  off<K extends keyof EditorEventMap>(
+    event: K,
+    listener: EditorEventListener<K>,
+  ): void;
   subscribe(listener: (state: EditorState) => void): () => void;
-  subscribeToNode(nodeId: NodeId, listener: (node: IRichNode | undefined) => void): () => void;
+  subscribeToNode(
+    nodeId: NodeId,
+    listener: (node: IRichNode | undefined) => void,
+  ): () => void;
   destroy(): void;
 }
 
 export class Editor implements EditorInstance {
   private state: EditorState;
+  private history: HistoryManager;
   private emitter = new EventEmitter();
   private stateSubscribers = new Set<(state: EditorState) => void>();
   private nodeSubscribers = new Map<NodeId, Set<(node: IRichNode | undefined) => void>>();
   private isBatching = false;
-  private pendingDocChange: { previous: IRichDocument; current: IRichDocument } | null = null;
 
   constructor(config: EditorConfig = {}) {
     const doc = config.initialDocument ?? createDocument();
@@ -64,10 +77,17 @@ export class Editor implements EditorInstance {
       throw new ValidationError([...validation.errors]);
     }
 
+    this.history = new HistoryManager({
+      maxSize: config.maxHistorySize,
+      enabled: config.enableHistory ?? true,
+    });
+
     this.state = {
       document: doc,
       selection: config.initialSelection ?? null,
       hoveredNodeId: null,
+      canUndo: false,
+      canRedo: false,
     };
   }
 
@@ -87,6 +107,24 @@ export class Editor implements EditorInstance {
     return findNodeById(this.state.document, nodeId);
   }
 
+  public canUndo(): boolean {
+    return this.history.canUndo();
+  }
+
+  public canRedo(): boolean {
+    return this.history.canRedo();
+  }
+
+  public clearHistory(): void {
+    this.history.clear();
+    this.state = {
+      ...this.state,
+      canUndo: false,
+      canRedo: false,
+    };
+    this.notifyStateSubscribers();
+  }
+
   public on<K extends keyof EditorEventMap>(
     event: K,
     listener: EditorEventListener<K>,
@@ -94,7 +132,10 @@ export class Editor implements EditorInstance {
     return this.emitter.on(event, listener);
   }
 
-  public off<K extends keyof EditorEventMap>(event: K, listener: EditorEventListener<K>): void {
+  public off<K extends keyof EditorEventMap>(
+    event: K,
+    listener: EditorEventListener<K>,
+  ): void {
     this.emitter.off(event, listener);
   }
 
@@ -127,6 +168,7 @@ export class Editor implements EditorInstance {
     this.emitter.clear();
     this.stateSubscribers.clear();
     this.nodeSubscribers.clear();
+    this.history.clear();
   }
 
   public readonly commands: EditorCommands = {
@@ -152,6 +194,12 @@ export class Editor implements EditorInstance {
     },
     hoverNode: (nodeId: NodeId | null): void => {
       this.executeHoverNode(nodeId);
+    },
+    undo: (): boolean => {
+      return this.executeUndo();
+    },
+    redo: (): boolean => {
+      return this.executeRedo();
     },
     batch: (callback: () => void): void => {
       this.executeBatch(callback);
@@ -214,24 +262,25 @@ export class Editor implements EditorInstance {
       }
     }
 
-    this.updateDocumentState(nextDoc, () => {
-      this.emitter.emit('node:insert', {
-        node: nodeToInsert,
-        parentId,
-        slot: slotName,
-        index: insertedIndex,
-      });
-    });
+    this.updateDocumentState(
+      nextDoc,
+      () => {
+        this.emitter.emit('node:insert', {
+          node: nodeToInsert,
+          parentId,
+          slot: slotName,
+          index: insertedIndex,
+        });
+      },
+      'insertNode',
+    );
 
     return nodeToInsert.id;
   }
 
   private executeRemoveNode(nodeId: NodeId): void {
     if (nodeId === this.state.document.root.id) {
-      throw new CommandExecutionError(
-        'Cannot remove root document node.',
-        'ROOT_DELETION_FORBIDDEN',
-      );
+      throw new CommandExecutionError('Cannot remove root document node.', 'ROOT_DELETION_FORBIDDEN');
     }
 
     const targetNode = findNodeById(this.state.document, nodeId);
@@ -241,19 +290,11 @@ export class Editor implements EditorInstance {
 
     const parentLoc = findParent(this.state.document, nodeId);
     if (!parentLoc) {
-      throw new CommandExecutionError(
-        `Parent of node "${nodeId}" could not be located.`,
-        'PARENT_NOT_FOUND',
-      );
+      throw new CommandExecutionError(`Parent of node "${nodeId}" could not be located.`, 'PARENT_NOT_FOUND');
     }
 
     const prevDoc = this.state.document;
-    const newRoot = this.removeChildFromNode(
-      prevDoc.root,
-      parentLoc.parent.id,
-      nodeId,
-      parentLoc.slotName,
-    );
+    const newRoot = this.removeChildFromNode(prevDoc.root, parentLoc.parent.id, nodeId, parentLoc.slotName);
 
     const nextDoc: IRichDocument = {
       ...prevDoc,
@@ -267,24 +308,33 @@ export class Editor implements EditorInstance {
       nextSelection = null;
     }
 
-    this.updateDocumentState(nextDoc, () => {
-      this.emitter.emit('node:remove', {
-        node: targetNode,
-        parentId: parentLoc.parent.id,
-        slot: parentLoc.slotName,
-        index: parentLoc.index,
-      });
+    this.updateDocumentState(
+      nextDoc,
+      () => {
+        this.emitter.emit('node:remove', {
+          node: targetNode,
+          parentId: parentLoc.parent.id,
+          slot: parentLoc.slotName,
+          index: parentLoc.index,
+        });
 
-      if (nextSelection !== this.state.selection) {
-        this.executeSelectNode(nextSelection);
-      }
-    });
+        if (nextSelection !== this.state.selection) {
+          this.executeSelectNode(nextSelection);
+        }
+      },
+      'removeNode',
+    );
   }
 
   private executeUpdateNode(payload: UpdateNodePayload): void {
     const targetNode = findNodeById(this.state.document, payload.nodeId);
     if (!targetNode) {
       throw new NodeNotFoundError(payload.nodeId, 'Cannot update non-existent node.');
+    }
+
+    // No-op check if payload is empty
+    if (!payload.props && !payload.meta) {
+      return;
     }
 
     const previousProps = targetNode.props;
@@ -304,21 +354,29 @@ export class Editor implements EditorInstance {
       ...(nextMeta ? { meta: nextMeta } : {}),
     }));
 
+    if (newRoot === prevDoc.root) {
+      return; // No change in tree
+    }
+
     const nextDoc: IRichDocument = {
       ...prevDoc,
       root: newRoot,
     };
 
-    this.updateDocumentState(nextDoc, () => {
-      this.emitter.emit('node:update', {
-        nodeId: payload.nodeId,
-        previousProps,
-        nextProps,
-        previousMeta,
-        nextMeta,
-      });
-      this.notifyNodeSubscribers(payload.nodeId, findNodeById(nextDoc, payload.nodeId));
-    });
+    this.updateDocumentState(
+      nextDoc,
+      () => {
+        this.emitter.emit('node:update', {
+          nodeId: payload.nodeId,
+          previousProps,
+          nextProps,
+          previousMeta,
+          nextMeta,
+        });
+        this.notifyNodeSubscribers(payload.nodeId, findNodeById(nextDoc, payload.nodeId));
+      },
+      'updateNode',
+    );
   }
 
   private executeMoveNode(payload: MoveNodePayload): void {
@@ -347,18 +405,12 @@ export class Editor implements EditorInstance {
 
     const targetParent = findNodeById(this.state.document, targetParentId);
     if (!targetParent) {
-      throw new NodeNotFoundError(
-        targetParentId,
-        'Cannot move node into non-existent target parent.',
-      );
+      throw new NodeNotFoundError(targetParentId, 'Cannot move node into non-existent target parent.');
     }
 
     const parentLoc = findParent(this.state.document, nodeId);
     if (!parentLoc) {
-      throw new CommandExecutionError(
-        `Cannot locate current parent of node "${nodeId}".`,
-        'PARENT_NOT_FOUND',
-      );
+      throw new CommandExecutionError(`Cannot locate current parent of node "${nodeId}".`, 'PARENT_NOT_FOUND');
     }
 
     const fromParentId = parentLoc.parent.id;
@@ -391,6 +443,10 @@ export class Editor implements EditorInstance {
     );
 
     const prevDoc = this.state.document;
+    if (finalRoot === prevDoc.root) {
+      return; // No structural change
+    }
+
     const nextDoc: IRichDocument = {
       ...prevDoc,
       root: finalRoot,
@@ -400,27 +456,29 @@ export class Editor implements EditorInstance {
     const updatedTargetParent = findNodeById(nextDoc, targetParentId);
     let finalIndex = 0;
     if (updatedTargetParent) {
-      const list = targetSlot
-        ? updatedTargetParent.slots?.[targetSlot]
-        : updatedTargetParent.children;
+      const list = targetSlot ? updatedTargetParent.slots?.[targetSlot] : updatedTargetParent.children;
       if (list) {
         finalIndex = list.findIndex((n) => n.id === nodeId);
         if (finalIndex === -1) finalIndex = list.length - 1;
       }
     }
 
-    this.updateDocumentState(nextDoc, () => {
-      this.emitter.emit('node:move', {
-        nodeId,
-        fromParentId,
-        fromSlot,
-        fromIndex,
-        toParentId: targetParentId,
-        toSlot: targetSlot,
-        toIndex: finalIndex,
-      });
-      this.notifyNodeSubscribers(nodeId, findNodeById(nextDoc, nodeId));
-    });
+    this.updateDocumentState(
+      nextDoc,
+      () => {
+        this.emitter.emit('node:move', {
+          nodeId,
+          fromParentId,
+          fromSlot,
+          fromIndex,
+          toParentId: targetParentId,
+          toSlot: targetSlot,
+          toIndex: finalIndex,
+        });
+        this.notifyNodeSubscribers(nodeId, findNodeById(nextDoc, nodeId));
+      },
+      'moveNode',
+    );
   }
 
   private executeDuplicateNode(payload: DuplicateNodePayload): NodeId {
@@ -437,15 +495,12 @@ export class Editor implements EditorInstance {
 
     const parentLoc = findParent(this.state.document, nodeId);
     if (!parentLoc && !targetParentId) {
-      throw new CommandExecutionError(
-        `Cannot locate parent for node "${nodeId}".`,
-        'PARENT_NOT_FOUND',
-      );
+      throw new CommandExecutionError(`Cannot locate parent for node "${nodeId}".`, 'PARENT_NOT_FOUND');
     }
 
     const finalParentId = targetParentId ?? parentLoc!.parent.id;
     const finalSlot = targetSlot ?? parentLoc!.slotName;
-    const finalIndex = targetIndex !== undefined ? targetIndex : parentLoc!.index + 1;
+    const finalIndex = targetIndex !== undefined ? targetIndex : (parentLoc!.index + 1);
 
     // Deep clone with fresh IDs for the node and all its descendants
     const clonedSubtree = cloneNode(originalNode, true);
@@ -497,6 +552,76 @@ export class Editor implements EditorInstance {
     this.notifyStateSubscribers();
   }
 
+  private executeUndo(): boolean {
+    if (!this.history.canUndo()) {
+      return false;
+    }
+
+    const prevDoc = this.state.document;
+    const entry = this.history.undo();
+    if (!entry) {
+      return false;
+    }
+
+    this.state = {
+      ...this.state,
+      document: entry.before.document,
+      selection: entry.before.selection,
+      canUndo: this.history.canUndo(),
+      canRedo: this.history.canRedo(),
+    };
+
+    this.emitter.emit('history:undo', {
+      document: entry.before.document,
+      selection: entry.before.selection,
+    });
+
+    this.emitter.emit('document:change', {
+      document: entry.before.document,
+      previousDocument: prevDoc,
+    });
+
+    this.notifyStateSubscribers();
+    this.notifyAllNodeSubscribers();
+
+    return true;
+  }
+
+  private executeRedo(): boolean {
+    if (!this.history.canRedo()) {
+      return false;
+    }
+
+    const prevDoc = this.state.document;
+    const entry = this.history.redo();
+    if (!entry) {
+      return false;
+    }
+
+    this.state = {
+      ...this.state,
+      document: entry.after.document,
+      selection: entry.after.selection,
+      canUndo: this.history.canUndo(),
+      canRedo: this.history.canRedo(),
+    };
+
+    this.emitter.emit('history:redo', {
+      document: entry.after.document,
+      selection: entry.after.selection,
+    });
+
+    this.emitter.emit('document:change', {
+      document: entry.after.document,
+      previousDocument: prevDoc,
+    });
+
+    this.notifyStateSubscribers();
+    this.notifyAllNodeSubscribers();
+
+    return true;
+  }
+
   private executeBatch(callback: () => void): void {
     if (this.isBatching) {
       callback();
@@ -505,42 +630,73 @@ export class Editor implements EditorInstance {
 
     this.isBatching = true;
     const startDoc = this.state.document;
+    const startSelection = this.state.selection;
 
     try {
       callback();
     } finally {
       this.isBatching = false;
       const finalDoc = this.state.document;
+      const finalSelection = this.state.selection;
+
       if (startDoc !== finalDoc) {
+        this.history.record(
+          { document: startDoc, selection: startSelection },
+          { document: finalDoc, selection: finalSelection },
+          'batch',
+        );
+
+        this.state = {
+          ...this.state,
+          canUndo: this.history.canUndo(),
+          canRedo: this.history.canRedo(),
+        };
+
         this.emitter.emit('document:change', {
           document: finalDoc,
           previousDocument: startDoc,
         });
+
         this.notifyStateSubscribers();
+        this.notifyAllNodeSubscribers();
       }
     }
   }
 
   // --- IMMUTABLE TREE TRANSFORM HELPERS ---
 
-  private updateDocumentState(nextDoc: IRichDocument, afterEffects?: () => void): void {
+  private updateDocumentState(
+    nextDoc: IRichDocument,
+    afterEffects?: () => void,
+    commandName?: string,
+  ): void {
     const prevDoc = this.state.document;
+    const prevSelection = this.state.selection;
+
+    if (prevDoc === nextDoc) {
+      return; // No mutation occurred
+    }
+
+    if (!this.isBatching) {
+      this.history.record(
+        { document: prevDoc, selection: prevSelection },
+        { document: nextDoc, selection: this.state.selection },
+        commandName,
+      );
+    }
+
     this.state = {
       ...this.state,
       document: nextDoc,
+      canUndo: this.history.canUndo(),
+      canRedo: this.history.canRedo(),
     };
 
     if (afterEffects) {
       afterEffects();
     }
 
-    if (this.isBatching) {
-      if (!this.pendingDocChange) {
-        this.pendingDocChange = { previous: prevDoc, current: nextDoc };
-      } else {
-        this.pendingDocChange.current = nextDoc;
-      }
-    } else {
+    if (!this.isBatching) {
       this.emitter.emit('document:change', {
         document: nextDoc,
         previousDocument: prevDoc,
@@ -562,6 +718,19 @@ export class Editor implements EditorInstance {
   private notifyNodeSubscribers(nodeId: NodeId, node: IRichNode | undefined): void {
     const subscribers = this.nodeSubscribers.get(nodeId);
     if (subscribers) {
+      for (const sub of Array.from(subscribers)) {
+        try {
+          sub(node);
+        } catch (err) {
+          console.error(`Error in iRich node subscriber for "${nodeId}":`, err);
+        }
+      }
+    }
+  }
+
+  private notifyAllNodeSubscribers(): void {
+    for (const [nodeId, subscribers] of this.nodeSubscribers.entries()) {
+      const node = findNodeById(this.state.document, nodeId);
       for (const sub of Array.from(subscribers)) {
         try {
           sub(node);
