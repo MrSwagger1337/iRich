@@ -18,6 +18,9 @@
   ],
   "sideEffects": false,
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/MrSwagger1337/iRich.git",
