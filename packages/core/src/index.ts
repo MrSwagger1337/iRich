@@ -134,3 +134,28 @@ export {
 
 // Editor Engine
 export { Editor, createEditor, type EditorInstance } from './editor';
+
+// AI Action Protocol & Sandboxing
+export {
+  validateAIActions,
+  applyAIActions,
+  isSafeAIValue,
+  containsDangerousScript,
+  type AIActionType,
+  type InsertNodeAIAction,
+  type UpdatePropsAIAction,
+  type UpdateMetaAIAction,
+  type RemoveNodeAIAction,
+  type MoveNodeAIAction,
+  type DuplicateNodeAIAction,
+  type ReplaceNodeAIAction,
+  type AIAction,
+  type AIValidationErrorCode,
+  type AIValidationError,
+  type AIValidationWarning,
+  type ValidateAIActionsOptions,
+  type AIValidationResult,
+  type ApplyAIActionsOptions,
+  type AIApplyResult,
+  type SecurityCheckResult,
+} from './ai';
