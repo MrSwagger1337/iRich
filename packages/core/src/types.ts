@@ -170,6 +170,15 @@ export interface DuplicateNodePayload {
 }
 
 /**
+ * Command payload for pasting a node from the clipboard buffer.
+ */
+export interface PasteNodePayload {
+  targetParentId?: NodeId;
+  targetSlot?: string;
+  targetIndex?: number;
+}
+
+/**
  * Public commands interface exposed by the editor instance.
  */
 export interface EditorCommands {
@@ -178,6 +187,9 @@ export interface EditorCommands {
   updateNode(payload: UpdateNodePayload): void;
   moveNode(payload: MoveNodePayload): void;
   duplicateNode(payload: DuplicateNodePayload | NodeId): NodeId;
+  copyNode(nodeId?: NodeId): boolean;
+  cutNode(nodeId?: NodeId): boolean;
+  pasteNode(payload?: PasteNodePayload | NodeId): NodeId | undefined;
   selectNode(nodeId: NodeId | null): void;
   clearSelection(): void;
   hoverNode(nodeId: NodeId | null): void;
@@ -230,6 +242,18 @@ export interface EditorEventMap {
   'breakpoint:change': {
     breakpoint: Breakpoint;
     previousBreakpoint: Breakpoint;
+  };
+  'clipboard:copy': {
+    node: IRichNode;
+  };
+  'clipboard:cut': {
+    node: IRichNode;
+  };
+  'clipboard:paste': {
+    node: IRichNode;
+    parentId: NodeId;
+    slot?: string;
+    index: number;
   };
   'history:undo': {
     document: IRichDocument;

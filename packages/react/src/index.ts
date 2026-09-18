@@ -109,3 +109,10 @@ export {
   type UseIRichAutosaveResult,
 } from './hooks/use-autosave';
 
+// Keyboard Shortcuts & Productivity
+export {
+  isEditableElement,
+  useIRichKeyboardShortcuts,
+  type UseIRichKeyboardShortcutsOptions,
+} from './hooks/use-keyboard-shortcuts';
+

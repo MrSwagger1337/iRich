@@ -16,10 +16,11 @@ import type {
   IRichNode,
   MoveNodePayload,
   NodeId,
+  PasteNodePayload,
   UpdateNodePayload,
 } from './types';
 import { BREAKPOINTS, DEFAULT_BREAKPOINT } from './types';
-import type { ComponentRegistry } from './component';
+import { canPlaceNode, type ComponentRegistry } from './component';
 import {
   CommandExecutionError,
   DuplicateIdError,
@@ -46,6 +47,8 @@ export interface EditorInstance {
   getNode(nodeId: NodeId): IRichNode | undefined;
   getRegistry(): ComponentRegistry | undefined;
   getActiveBreakpoint(): Breakpoint;
+  getClipboard(): IRichNode | null;
+  canPaste(): boolean;
   canUndo(): boolean;
   canRedo(): boolean;
   clearHistory(): void;
@@ -70,6 +73,7 @@ export class Editor implements EditorInstance {
   private state: EditorState;
   private history: HistoryManager;
   private registry?: ComponentRegistry;
+  private clipboard: IRichNode | null = null;
   private emitter = new EventEmitter();
   private stateSubscribers = new Set<(state: EditorState) => void>();
   private nodeSubscribers = new Map<NodeId, Set<(node: IRichNode | undefined) => void>>();
@@ -121,6 +125,14 @@ export class Editor implements EditorInstance {
 
   public getActiveBreakpoint(): Breakpoint {
     return this.state.activeBreakpoint;
+  }
+
+  public getClipboard(): IRichNode | null {
+    return this.clipboard ? cloneNode(this.clipboard, false) : null;
+  }
+
+  public canPaste(): boolean {
+    return this.clipboard !== null;
   }
 
   public canUndo(): boolean {
@@ -185,6 +197,7 @@ export class Editor implements EditorInstance {
     this.stateSubscribers.clear();
     this.nodeSubscribers.clear();
     this.history.clear();
+    this.clipboard = null;
   }
 
   public readonly commands: EditorCommands = {
@@ -204,6 +217,17 @@ export class Editor implements EditorInstance {
       const normalizedPayload: DuplicateNodePayload =
         typeof payload === 'string' ? { nodeId: payload } : payload;
       return this.executeDuplicateNode(normalizedPayload);
+    },
+    copyNode: (nodeId?: NodeId): boolean => {
+      return this.executeCopyNode(nodeId);
+    },
+    cutNode: (nodeId?: NodeId): boolean => {
+      return this.executeCutNode(nodeId);
+    },
+    pasteNode: (payload?: PasteNodePayload | NodeId): NodeId | undefined => {
+      const normalizedPayload: PasteNodePayload | undefined =
+        typeof payload === 'string' ? { targetParentId: payload } : payload;
+      return this.executePasteNode(normalizedPayload);
     },
     selectNode: (nodeId: NodeId | null): void => {
       this.executeSelectNode(nodeId);
@@ -540,12 +564,143 @@ export class Editor implements EditorInstance {
     // Deep clone with fresh IDs for the node and all its descendants
     const clonedSubtree = cloneNode(originalNode, true);
 
-    return this.executeInsertNode({
+    const newId = this.executeInsertNode({
       node: clonedSubtree,
       parentId: finalParentId,
       slot: finalSlot,
       index: finalIndex,
     });
+
+    this.executeSelectNode(newId);
+
+    return newId;
+  }
+
+  private executeCopyNode(nodeId?: NodeId): boolean {
+    const targetId = nodeId ?? this.state.selection;
+    if (!targetId) {
+      return false;
+    }
+
+    if (targetId === this.state.document.root.id) {
+      return false;
+    }
+
+    const node = findNodeById(this.state.document, targetId);
+    if (!node) {
+      if (nodeId) {
+        throw new NodeNotFoundError(nodeId, 'Cannot copy non-existent node.');
+      }
+      return false;
+    }
+
+    this.clipboard = cloneNode(node, false);
+
+    this.emitter.emit('clipboard:copy', {
+      node: this.clipboard,
+    });
+
+    return true;
+  }
+
+  private executeCutNode(nodeId?: NodeId): boolean {
+    const targetId = nodeId ?? this.state.selection;
+    if (!targetId) {
+      return false;
+    }
+
+    if (targetId === this.state.document.root.id) {
+      throw new CommandExecutionError('Cannot cut the root node.', 'ROOT_DELETION_FORBIDDEN');
+    }
+
+    const node = findNodeById(this.state.document, targetId);
+    if (!node) {
+      if (nodeId) {
+        throw new NodeNotFoundError(nodeId, 'Cannot cut non-existent node.');
+      }
+      return false;
+    }
+
+    this.clipboard = cloneNode(node, false);
+
+    this.emitter.emit('clipboard:cut', {
+      node: this.clipboard,
+    });
+
+    this.executeRemoveNode(targetId);
+
+    return true;
+  }
+
+  private executePasteNode(payload?: PasteNodePayload): NodeId | undefined {
+    if (!this.clipboard) {
+      return undefined;
+    }
+
+    let targetParentId: NodeId;
+    let targetSlot: string | undefined = payload?.targetSlot;
+    let targetIndex: number | undefined = payload?.targetIndex;
+
+    if (payload?.targetParentId) {
+      targetParentId = payload.targetParentId;
+    } else if (this.state.selection) {
+      const selectedNode = findNodeById(this.state.document, this.state.selection);
+      if (selectedNode && selectedNode.id !== this.state.document.root.id) {
+        const parentLoc = findParent(this.state.document, selectedNode.id);
+        if (parentLoc) {
+          targetParentId = parentLoc.parent.id;
+          targetSlot = targetSlot ?? parentLoc.slotName;
+          targetIndex = targetIndex ?? parentLoc.index + 1;
+        } else {
+          targetParentId = this.state.document.root.id;
+        }
+      } else {
+        targetParentId = this.state.document.root.id;
+      }
+    } else {
+      targetParentId = this.state.document.root.id;
+    }
+
+    const parentNode = findNodeById(this.state.document, targetParentId);
+    if (!parentNode) {
+      throw new NodeNotFoundError(targetParentId, 'Cannot paste node into non-existent parent.');
+    }
+
+    // Clone clipboard subtree generating fresh IDs for all nodes
+    const clonedSubtree = cloneNode(this.clipboard, true);
+
+    // Validate placement rules against registry
+    if (this.registry) {
+      const placement = canPlaceNode({
+        document: this.state.document,
+        source: clonedSubtree,
+        targetParentId,
+        targetSlot,
+        registry: this.registry,
+      });
+
+      if (!placement.allowed) {
+        return undefined;
+      }
+    }
+
+    const newId = this.executeInsertNode({
+      node: clonedSubtree,
+      parentId: targetParentId,
+      slot: targetSlot,
+      index: targetIndex,
+    });
+
+    this.executeSelectNode(newId);
+
+    this.emitter.emit('clipboard:paste', {
+      node: clonedSubtree,
+      parentId: targetParentId,
+      slot: targetSlot,
+      index: targetIndex ?? 0,
+    });
+
+    return newId;
   }
 
   private executeSelectNode(nodeId: NodeId | null): void {

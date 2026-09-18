@@ -8,6 +8,13 @@ import { Editor, type EditorInstance } from '@irich/core';
 import { IRichContext } from './context';
 import type { IRichContextValue, IRichProviderProps } from './types';
 
+import { useIRichKeyboardShortcuts } from './hooks/use-keyboard-shortcuts';
+
+const KeyboardShortcutsManager: React.FC<{ enabled?: boolean }> = ({ enabled = true }) => {
+  useIRichKeyboardShortcuts({ enabled });
+  return null;
+};
+
 /**
  * Root context provider for iRich React applications.
  *
@@ -21,6 +28,7 @@ export const IRichProvider: React.FC<IRichProviderProps> = ({
   onChange,
   onSelectionChange,
   onBreakpointChange,
+  enableKeyboardShortcuts = true,
   children,
 }) => {
   // Store callbacks in refs to avoid re-binding event listeners on every render
@@ -87,5 +95,10 @@ export const IRichProvider: React.FC<IRichProviderProps> = ({
     [activeEditor],
   );
 
-  return <IRichContext.Provider value={contextValue}>{children}</IRichContext.Provider>;
+  return (
+    <IRichContext.Provider value={contextValue}>
+      <KeyboardShortcutsManager enabled={enableKeyboardShortcuts} />
+      {children}
+    </IRichContext.Provider>
+  );
 };

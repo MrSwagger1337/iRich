@@ -28,6 +28,7 @@ export {
   type UpdateNodePayload,
   type MoveNodePayload,
   type DuplicateNodePayload,
+  type PasteNodePayload,
   type EditorEventMap,
   type EditorEventListener,
 } from './types';

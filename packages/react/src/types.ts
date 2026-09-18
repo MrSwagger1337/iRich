@@ -48,6 +48,12 @@ export interface IRichProviderProps {
   onBreakpointChange?: (breakpoint: Breakpoint) => void;
 
   /**
+   * Whether global productivity keyboard shortcuts (Cmd+C, Cmd+X, Cmd+V, Cmd+D, Delete, Cmd+Z, etc.)
+   * are active. Defaults to true.
+   */
+  enableKeyboardShortcuts?: boolean;
+
+  /**
    * React children to render within the provider.
    */
   children: ReactNode;
