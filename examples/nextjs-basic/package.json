@@ -11,7 +11,11 @@
   },
   "dependencies": {
     "@irich/core": "workspace:*",
+    "@irich/plugin-sdk": "workspace:*",
     "@irich/react": "workspace:*",
+    "@irich/renderer": "workspace:*",
+    "@irich/rich-text": "workspace:*",
+    "@irich/ui": "workspace:*",
     "next": "^15.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

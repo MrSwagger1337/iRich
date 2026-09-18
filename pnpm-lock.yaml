@@ -279,9 +279,21 @@ importers:
       '@irich/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@irich/plugin-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk
       '@irich/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@irich/renderer':
+        specifier: workspace:*
+        version: link:../../packages/renderer
+      '@irich/rich-text':
+        specifier: workspace:*
+        version: link:../../packages/rich-text
+      '@irich/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       next:
         specifier: ^15.1.7
         version: 15.5.25(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@22.20.3)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)

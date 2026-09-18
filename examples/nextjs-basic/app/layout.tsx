@@ -1,16 +1,20 @@
-import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
+import './globals.css';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'iRich Next.js Basic Example',
-  description: 'Basic integration of iRich in a Next.js application',
+  description:
+    'Demonstration of embeddable visual content editing, component definitions, and SSR rendering in Next.js with iRich.',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
