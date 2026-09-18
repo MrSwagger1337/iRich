@@ -76,12 +76,37 @@ export interface IRichDocument {
 }
 
 /**
+ * Supported editor breakpoints for responsive styling and property overrides.
+ */
+export type Breakpoint = 'desktop' | 'tablet' | 'mobile';
+
+export const BREAKPOINTS: readonly Breakpoint[] = ['desktop', 'tablet', 'mobile'] as const;
+
+export const DEFAULT_BREAKPOINT: Breakpoint = 'desktop';
+
+/**
+ * Responsive dictionary containing breakpoint-specific values.
+ */
+export interface ResponsiveObject<T> {
+  readonly desktop?: T;
+  readonly tablet?: T;
+  readonly mobile?: T;
+  readonly [key: string]: T | undefined;
+}
+
+/**
+ * Generic responsive value representing either a base scalar or breakpoint overrides.
+ */
+export type ResponsiveValue<T> = T | ResponsiveObject<T>;
+
+/**
  * State snapshot of the editor instance.
  */
 export interface EditorState {
   readonly document: IRichDocument;
   readonly selection: NodeId | null;
   readonly hoveredNodeId: NodeId | null;
+  readonly activeBreakpoint: Breakpoint;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
 }
@@ -92,6 +117,7 @@ export interface EditorState {
 export interface EditorConfig {
   initialDocument?: IRichDocument;
   initialSelection?: NodeId | null;
+  activeBreakpoint?: Breakpoint;
   maxHistorySize?: number;
   enableHistory?: boolean;
   registry?: ComponentRegistry;
@@ -155,6 +181,7 @@ export interface EditorCommands {
   selectNode(nodeId: NodeId | null): void;
   clearSelection(): void;
   hoverNode(nodeId: NodeId | null): void;
+  setBreakpoint(breakpoint: Breakpoint): void;
   undo(): boolean;
   redo(): boolean;
   batch(callback: () => void): void;
@@ -200,6 +227,10 @@ export interface EditorEventMap {
     selection: NodeId | null;
     previousSelection: NodeId | null;
   };
+  'breakpoint:change': {
+    breakpoint: Breakpoint;
+    previousBreakpoint: Breakpoint;
+  };
   'history:undo': {
     document: IRichDocument;
     selection: NodeId | null;
@@ -213,3 +244,4 @@ export interface EditorEventMap {
 export type EditorEventListener<E extends keyof EditorEventMap> = (
   payload: EditorEventMap[E],
 ) => void;
+

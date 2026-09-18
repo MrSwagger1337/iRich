@@ -394,4 +394,100 @@ describe('IRichInspector', () => {
     const desc = container?.querySelector('#irich-field-widget-a11y-title-desc');
     expect(desc?.textContent).toBe('Title of the widget');
   });
+
+  it('should non-destructively edit responsive properties across breakpoints', () => {
+    const ResponsiveComponent = defineComponent({
+      type: 'ResponsiveHero',
+      label: 'Responsive Hero',
+      fields: {
+        title: {
+          type: 'text',
+          label: 'Title',
+          defaultValue: 'Default Title',
+        },
+        align: {
+          type: 'select',
+          label: 'Alignment',
+          defaultValue: 'left',
+          responsive: true,
+          options: [
+            { label: 'Left', value: 'left' },
+            { label: 'Center', value: 'center' },
+            { label: 'Right', value: 'right' },
+          ],
+        },
+      },
+    });
+
+    const registry = createComponentRegistry();
+    registry.register(ResponsiveComponent);
+
+    const heroNode = createNode({
+      id: 'hero-resp-1',
+      type: 'ResponsiveHero',
+      props: {
+        title: 'Main Title',
+        align: 'left',
+      },
+    });
+
+    const doc = createDocument({
+      root: createNode({ id: 'root', type: 'root', children: [heroNode] }),
+    });
+
+    const editor = new Editor({
+      initialDocument: doc,
+      initialSelection: 'hero-resp-1',
+      activeBreakpoint: 'desktop',
+      registry,
+    });
+
+    act(() => {
+      root!.render(
+        <IRichProvider editor={editor}>
+          <IRichInspector />
+        </IRichProvider>,
+      );
+    });
+
+    // 1. Initial desktop value is "left"
+    const alignSelect = container?.querySelector('#irich-field-hero-resp-1-align') as HTMLSelectElement;
+    expect(alignSelect.value).toBe('left');
+
+    // 2. Switch editor breakpoint to "mobile"
+    act(() => {
+      editor.commands.setBreakpoint('mobile');
+    });
+
+    // 3. In mobile view, changing align to "center" creates a mobile override
+    act(() => {
+      alignSelect.value = 'center';
+      alignSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    // 4. Verify document state contains both desktop and mobile values
+    const updatedHero = editor.getNode('hero-resp-1');
+    expect(updatedHero?.props.align).toEqual({
+      desktop: 'left',
+      mobile: 'center',
+    });
+
+    // 5. Switching back to desktop shows "left"
+    act(() => {
+      editor.commands.setBreakpoint('desktop');
+    });
+    expect(alignSelect.value).toBe('left');
+
+    // 6. Switching to tablet shows "left" (inherited from desktop)
+    act(() => {
+      editor.commands.setBreakpoint('tablet');
+    });
+    expect(alignSelect.value).toBe('left');
+
+    // 7. Switching to mobile shows "center" (the override)
+    act(() => {
+      editor.commands.setBreakpoint('mobile');
+    });
+    expect(alignSelect.value).toBe('center');
+  });
 });

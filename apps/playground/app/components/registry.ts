@@ -20,6 +20,7 @@ export const ContainerComponent = defineComponent({
       type: 'select',
       label: 'Padding',
       defaultValue: 'medium',
+      responsive: true,
       options: [
         { label: 'None', value: 'none' },
         { label: 'Small', value: 'small' },
@@ -52,6 +53,7 @@ export const ContainerComponent = defineComponent({
       type: 'select',
       label: 'Layout Direction',
       defaultValue: 'vertical',
+      responsive: true,
       options: [
         { label: 'Vertical (Stack)', value: 'vertical' },
         { label: 'Horizontal (2-Column Grid)', value: 'grid-2' },
@@ -90,6 +92,7 @@ export const HeadingComponent = defineComponent({
       type: 'select',
       label: 'Alignment',
       defaultValue: 'left',
+      responsive: true,
       options: [
         { label: 'Left', value: 'left' },
         { label: 'Center', value: 'center' },
@@ -118,6 +121,7 @@ export const TextComponent = defineComponent({
       type: 'select',
       label: 'Text Size',
       defaultValue: 'md',
+      responsive: true,
       options: [
         { label: 'Small (14px)', value: 'sm' },
         { label: 'Medium (16px)', value: 'md' },
@@ -139,6 +143,7 @@ export const TextComponent = defineComponent({
       type: 'select',
       label: 'Alignment',
       defaultValue: 'left',
+      responsive: true,
       options: [
         { label: 'Left', value: 'left' },
         { label: 'Center', value: 'center' },
@@ -257,6 +262,7 @@ export const HeroComponent = defineComponent({
       type: 'select',
       label: 'Alignment',
       defaultValue: 'center',
+      responsive: true,
       options: [
         { label: 'Left', value: 'left' },
         { label: 'Center', value: 'center' },

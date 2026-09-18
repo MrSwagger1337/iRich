@@ -4,6 +4,7 @@
  */
 
 import type { FC, ReactNode } from 'react';
+import type { Breakpoint } from '@irich/core';
 import type {
   BooleanFieldControlProps,
   ColorFieldControlProps,
@@ -22,14 +23,50 @@ export const FieldControlWrapper: FC<{
   label?: string;
   description?: string;
   className?: string;
+  isResponsive?: boolean;
+  activeBreakpoint?: Breakpoint;
+  isOverridden?: boolean;
   children: ReactNode;
-}> = ({ inputId, label, description, className, children }) => {
+}> = ({
+  inputId,
+  label,
+  description,
+  className,
+  isResponsive,
+  activeBreakpoint,
+  isOverridden,
+  children,
+}) => {
   return (
-    <div className={`irich-inspector-field ${className ?? ''}`}>
+    <div
+      className={`irich-inspector-field ${isResponsive ? 'irich-inspector-field-responsive' : ''} ${
+        className ?? ''
+      }`}
+    >
       {label && (
-        <label htmlFor={inputId} className="irich-inspector-label">
-          {label}
-        </label>
+        <div className="irich-inspector-label-row">
+          <label htmlFor={inputId} className="irich-inspector-label">
+            {label}
+          </label>
+          {isResponsive && (
+            <div className="irich-inspector-responsive-meta">
+              {isOverridden && (
+                <span
+                  className="irich-inspector-override-tag"
+                  title={`Explicit override set on ${activeBreakpoint}`}
+                >
+                  Override
+                </span>
+              )}
+              <span
+                className="irich-inspector-breakpoint-tag"
+                title={`Editing for ${activeBreakpoint} viewport`}
+              >
+                {activeBreakpoint === 'mobile' ? '📱' : activeBreakpoint === 'tablet' ? '💻' : '🖥️'}
+              </span>
+            </div>
+          )}
+        </div>
       )}
       <div className="irich-inspector-control-container">{children}</div>
       {description && (
@@ -293,6 +330,9 @@ export const RenderFieldControl: FC<FieldControlProps> = (props) => {
       inputId={inputId}
       label={fieldDefinition.label || props.fieldName}
       description={fieldDefinition.description}
+      isResponsive={props.isResponsive}
+      activeBreakpoint={props.activeBreakpoint}
+      isOverridden={props.isOverridden}
     >
       {control}
     </FieldControlWrapper>

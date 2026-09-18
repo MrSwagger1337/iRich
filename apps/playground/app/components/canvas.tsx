@@ -53,6 +53,7 @@ export function Canvas({ viewport }: CanvasProps) {
           <IRichRenderer
             document={document}
             components={playgroundComponentRenderers}
+            breakpoint={viewport}
             onUnknownComponent="fallback"
           />
         </div>

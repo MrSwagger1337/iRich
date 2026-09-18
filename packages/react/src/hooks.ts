@@ -5,6 +5,7 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import type {
+  Breakpoint,
   EditorInstance,
   EditorState,
   IRichDocument,
@@ -13,6 +14,7 @@ import type {
 } from '@irich/core';
 import { useIRichContext } from './context';
 import type {
+  UseIRichBreakpointResult,
   UseIRichHistoryResult,
   UseIRichResult,
   UseIRichSelectionResult,
@@ -27,6 +29,45 @@ import type {
 export function useIRichEditor(): EditorInstance {
   const { editor } = useIRichContext();
   return editor;
+}
+
+/**
+ * Subscribes to the active editor viewport breakpoint.
+ *
+ * Re-renders ONLY when the active breakpoint changes.
+ */
+export function useIRichBreakpoint(): UseIRichBreakpointResult {
+  const editor = useIRichEditor();
+
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      return editor.on('breakpoint:change', () => {
+        onStoreChange();
+      });
+    },
+    [editor],
+  );
+
+  const getSnapshot = useCallback((): Breakpoint => {
+    return editor.getActiveBreakpoint();
+  }, [editor]);
+
+  const breakpoint = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+  const setBreakpoint = useCallback(
+    (nextBreakpoint: Breakpoint) => {
+      editor.commands.setBreakpoint(nextBreakpoint);
+    },
+    [editor],
+  );
+
+  return useMemo(
+    () => ({
+      breakpoint,
+      setBreakpoint,
+    }),
+    [breakpoint, setBreakpoint],
+  );
 }
 
 /**
@@ -173,6 +214,13 @@ export function useIRich(): UseIRichResult {
     editor.commands.clearSelection();
   }, [editor]);
 
+  const setBreakpoint = useCallback(
+    (nextBreakpoint: Breakpoint) => {
+      editor.commands.setBreakpoint(nextBreakpoint);
+    },
+    [editor],
+  );
+
   const undo = useCallback((): boolean => {
     return editor.commands.undo();
   }, [editor]);
@@ -191,15 +239,17 @@ export function useIRich(): UseIRichResult {
       state,
       document: state.document,
       selectedNodeId: state.selection,
+      breakpoint: state.activeBreakpoint,
       canUndo: state.canUndo,
       canRedo: state.canRedo,
       selectNode,
       clearSelection,
+      setBreakpoint,
       undo,
       redo,
       clearHistory,
     }),
-    [editor, state, selectNode, clearSelection, undo, redo, clearHistory],
+    [editor, state, selectNode, clearSelection, setBreakpoint, undo, redo, clearHistory],
   );
 }
 

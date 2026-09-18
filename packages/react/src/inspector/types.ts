@@ -6,6 +6,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type {
   BooleanFieldDefinition,
+  Breakpoint,
   ColorFieldDefinition,
   ComponentDefinition,
   FieldDefinition,
@@ -53,6 +54,21 @@ export interface FieldControlProps<TDef extends FieldDefinition = FieldDefinitio
   inputId: string;
 
   /**
+   * Active editor viewport breakpoint.
+   */
+  activeBreakpoint?: Breakpoint;
+
+  /**
+   * Whether this field explicitly opts into responsive breakpoint overrides.
+   */
+  isResponsive?: boolean;
+
+  /**
+   * Whether the field currently has an explicit override set for activeBreakpoint.
+   */
+  isOverridden?: boolean;
+
+  /**
    * Optional custom CSS class name.
    */
   className?: string;
@@ -83,6 +99,16 @@ export interface IRichInspectorProps {
    * Optional inline styles.
    */
   style?: CSSProperties;
+
+  /**
+   * Optional active breakpoint override (defaults to editor active breakpoint).
+   */
+  breakpoint?: Breakpoint;
+
+  /**
+   * Optional callback when breakpoint changes.
+   */
+  onBreakpointChange?: (breakpoint: Breakpoint) => void;
 
   /**
    * Custom empty state rendered when no node is selected.

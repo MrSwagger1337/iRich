@@ -4,7 +4,7 @@
  */
 
 import type React from 'react';
-import type { IRichDocument, IRichNode, NodeId } from '@irich/core';
+import type { Breakpoint, IRichDocument, IRichNode, NodeId } from '@irich/core';
 import type { RendererRegistry } from './registry';
 
 /**
@@ -81,6 +81,11 @@ export interface IRichRendererProps {
   readonly components: ComponentMap | RendererRegistry;
 
   /**
+   * Target viewport breakpoint for resolving responsive values (default: 'desktop').
+   */
+  readonly breakpoint?: Breakpoint;
+
+  /**
    * Custom fallback component rendered when encountering an unregistered component type.
    */
   readonly fallback?: React.ComponentType<UnknownComponentProps>;
@@ -112,6 +117,7 @@ export interface IRichRendererProps {
 export interface RenderNodeProps {
   readonly node: IRichNode;
   readonly components: ComponentMap;
+  readonly breakpoint?: Breakpoint;
   readonly fallback?: React.ComponentType<UnknownComponentProps>;
   readonly onUnknownComponent?: UnknownComponentBehavior;
   readonly onError?: (error: Error, node: IRichNode) => void;
@@ -121,6 +127,7 @@ export interface RenderNodeProps {
  * Optional settings for functional render helpers.
  */
 export interface RenderOptions {
+  readonly breakpoint?: Breakpoint;
   readonly fallback?: React.ComponentType<UnknownComponentProps>;
   readonly onUnknownComponent?: UnknownComponentBehavior;
   readonly onError?: (error: Error, node: IRichNode) => void;

@@ -8,6 +8,7 @@ export { IRichProvider } from './provider';
 export { IRichEditor, type IRichEditorProps } from './editor';
 export {
   useIRich,
+  useIRichBreakpoint,
   useIRichDocument,
   useIRichEditor,
   useIRichHistory,
@@ -42,6 +43,7 @@ export type {
 export type {
   IRichContextValue,
   IRichProviderProps,
+  UseIRichBreakpointResult,
   UseIRichHistoryResult,
   UseIRichResult,
   UseIRichSelectionResult,

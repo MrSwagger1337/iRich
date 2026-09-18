@@ -20,6 +20,7 @@ export const IRichProvider: React.FC<IRichProviderProps> = ({
   config,
   onChange,
   onSelectionChange,
+  onBreakpointChange,
   children,
 }) => {
   // Store callbacks in refs to avoid re-binding event listeners on every render
@@ -28,6 +29,9 @@ export const IRichProvider: React.FC<IRichProviderProps> = ({
 
   const onSelectionChangeRef = useRef(onSelectionChange);
   onSelectionChangeRef.current = onSelectionChange;
+
+  const onBreakpointChangeRef = useRef(onBreakpointChange);
+  onBreakpointChangeRef.current = onBreakpointChange;
 
   // Track whether the editor instance was internally created
   const isInternalEditorRef = useRef(false);
@@ -66,6 +70,13 @@ export const IRichProvider: React.FC<IRichProviderProps> = ({
   useEffect(() => {
     return activeEditor.on('selection:change', ({ selection }) => {
       onSelectionChangeRef.current?.(selection);
+    });
+  }, [activeEditor]);
+
+  // Subscribe to breakpoint change events for onBreakpointChange callback
+  useEffect(() => {
+    return activeEditor.on('breakpoint:change', ({ breakpoint }) => {
+      onBreakpointChangeRef.current?.(breakpoint);
     });
   }, [activeEditor]);
 

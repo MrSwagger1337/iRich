@@ -27,6 +27,7 @@ import type { ComponentMap, IRichRendererProps } from './types';
 export const IRichRenderer: React.FC<IRichRendererProps> = ({
   document,
   components,
+  breakpoint = 'desktop',
   fallback,
   onUnknownComponent = 'fallback',
   onError,
@@ -45,6 +46,7 @@ export const IRichRenderer: React.FC<IRichRendererProps> = ({
       key={document.root.id}
       node={document.root}
       components={resolvedComponents}
+      breakpoint={breakpoint}
       fallback={fallback}
       onUnknownComponent={onUnknownComponent}
       onError={onError}
@@ -74,6 +76,7 @@ export function renderDocument(
     <IRichRenderer
       document={document}
       components={components}
+      breakpoint={options.breakpoint}
       fallback={options.fallback}
       onUnknownComponent={options.onUnknownComponent}
       onError={options.onError}

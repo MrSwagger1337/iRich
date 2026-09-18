@@ -7,25 +7,40 @@
 export const VERSION = '0.1.0';
 
 // Canonical Types
-export type {
-  JSONPrimitive,
-  JSONObject,
-  JSONArray,
-  JSONValue,
-  NodeId,
-  IRichNode,
-  IRichDocument,
-  EditorState,
-  EditorConfig,
-  EditorCommands,
-  InsertNodePayload,
-  RemoveNodePayload,
-  UpdateNodePayload,
-  MoveNodePayload,
-  DuplicateNodePayload,
-  EditorEventMap,
-  EditorEventListener,
+export {
+  BREAKPOINTS,
+  DEFAULT_BREAKPOINT,
+  type Breakpoint,
+  type ResponsiveObject,
+  type ResponsiveValue,
+  type JSONPrimitive,
+  type JSONObject,
+  type JSONArray,
+  type JSONValue,
+  type NodeId,
+  type IRichNode,
+  type IRichDocument,
+  type EditorState,
+  type EditorConfig,
+  type EditorCommands,
+  type InsertNodePayload,
+  type RemoveNodePayload,
+  type UpdateNodePayload,
+  type MoveNodePayload,
+  type DuplicateNodePayload,
+  type EditorEventMap,
+  type EditorEventListener,
 } from './types';
+
+// Responsive Utilities
+export {
+  isResponsiveObject,
+  resolveResponsiveValue,
+  getResponsiveBreakpointValue,
+  setResponsiveBreakpointValue,
+  removeResponsiveBreakpointOverride,
+  resolveNodeProps,
+} from './responsive';
 
 // Error Classes
 export {

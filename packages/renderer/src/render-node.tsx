@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import type { IRichNode } from '@irich/core';
+import { resolveNodeProps, type IRichNode } from '@irich/core';
 import { DefaultUnknownComponent } from './fallback';
 import type { ComponentMap, RenderNodeProps, RenderOptions } from './types';
 
@@ -16,6 +16,7 @@ export type { RenderOptions } from './types';
 export const RenderNode: React.FC<RenderNodeProps> = ({
   node,
   components,
+  breakpoint = 'desktop',
   fallback,
   onUnknownComponent = 'fallback',
   onError,
@@ -32,6 +33,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({
         key={child.id}
         node={child}
         components={components}
+        breakpoint={breakpoint}
         fallback={fallback}
         onUnknownComponent={onUnknownComponent}
         onError={onError}
@@ -50,6 +52,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({
             key={child.id}
             node={child}
             components={components}
+            breakpoint={breakpoint}
             fallback={fallback}
             onUnknownComponent={onUnknownComponent}
             onError={onError}
@@ -61,13 +64,16 @@ export const RenderNode: React.FC<RenderNodeProps> = ({
     }
   }
 
-  // 3. Special handling for root container if not explicitly mapped
+  // 3. Resolve responsive props for active breakpoint
+  const resolvedProps = resolveNodeProps(node.props, breakpoint);
+
+  // 4. Special handling for root container if not explicitly mapped
   if (node.type === 'root') {
     const RootComponent = components[node.type];
     if (RootComponent) {
       return (
         <RootComponent
-          {...node.props}
+          {...resolvedProps}
           node={node}
           id={node.id}
           children={renderedChildren}
@@ -80,14 +86,14 @@ export const RenderNode: React.FC<RenderNodeProps> = ({
     return <React.Fragment>{renderedChildren}</React.Fragment>;
   }
 
-  // 4. Resolve registered component
+  // 5. Resolve registered component
   const Component = components[node.type];
 
   if (Component) {
     try {
       return (
         <Component
-          {...node.props}
+          {...resolvedProps}
           node={node}
           id={node.id}
           children={renderedChildren}
@@ -106,7 +112,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({
     }
   }
 
-  // 5. Unknown component handling
+  // 6. Unknown component handling
   const availableComponents = Object.keys(components);
 
   if (onUnknownComponent === 'ignore') {
@@ -146,6 +152,7 @@ export function renderNode(
       key={node.id}
       node={node}
       components={components}
+      breakpoint={options.breakpoint}
       fallback={options.fallback}
       onUnknownComponent={options.onUnknownComponent}
       onError={options.onError}

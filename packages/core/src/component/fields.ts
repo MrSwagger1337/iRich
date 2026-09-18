@@ -23,6 +23,7 @@ export interface BaseFieldDefinition {
   readonly defaultValue?: JSONValue;
   readonly hidden?: boolean;
   readonly readOnly?: boolean;
+  readonly responsive?: boolean;
 }
 
 /**

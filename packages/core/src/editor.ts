@@ -4,6 +4,7 @@
  */
 
 import type {
+  Breakpoint,
   DuplicateNodePayload,
   EditorCommands,
   EditorConfig,
@@ -17,6 +18,7 @@ import type {
   NodeId,
   UpdateNodePayload,
 } from './types';
+import { BREAKPOINTS, DEFAULT_BREAKPOINT } from './types';
 import type { ComponentRegistry } from './component';
 import {
   CommandExecutionError,
@@ -43,6 +45,7 @@ export interface EditorInstance {
   getSelection(): NodeId | null;
   getNode(nodeId: NodeId): IRichNode | undefined;
   getRegistry(): ComponentRegistry | undefined;
+  getActiveBreakpoint(): Breakpoint;
   canUndo(): boolean;
   canRedo(): boolean;
   clearHistory(): void;
@@ -90,6 +93,7 @@ export class Editor implements EditorInstance {
       document: doc,
       selection: config.initialSelection ?? null,
       hoveredNodeId: null,
+      activeBreakpoint: config.activeBreakpoint ?? DEFAULT_BREAKPOINT,
       canUndo: false,
       canRedo: false,
     };
@@ -113,6 +117,10 @@ export class Editor implements EditorInstance {
 
   public getRegistry(): ComponentRegistry | undefined {
     return this.registry;
+  }
+
+  public getActiveBreakpoint(): Breakpoint {
+    return this.state.activeBreakpoint;
   }
 
   public canUndo(): boolean {
@@ -205,6 +213,9 @@ export class Editor implements EditorInstance {
     },
     hoverNode: (nodeId: NodeId | null): void => {
       this.executeHoverNode(nodeId);
+    },
+    setBreakpoint: (breakpoint: Breakpoint): void => {
+      this.executeSetBreakpoint(breakpoint);
     },
     undo: (): boolean => {
       return this.executeUndo();
@@ -572,6 +583,32 @@ export class Editor implements EditorInstance {
       ...this.state,
       hoveredNodeId: nodeId,
     };
+
+    this.notifyStateSubscribers();
+  }
+
+  private executeSetBreakpoint(breakpoint: Breakpoint): void {
+    if (!BREAKPOINTS.includes(breakpoint)) {
+      throw new CommandExecutionError(
+        `Invalid breakpoint "${breakpoint}". Expected one of: ${BREAKPOINTS.join(', ')}`,
+        'INVALID_BREAKPOINT',
+      );
+    }
+
+    if (this.state.activeBreakpoint === breakpoint) {
+      return;
+    }
+
+    const previousBreakpoint = this.state.activeBreakpoint;
+    this.state = {
+      ...this.state,
+      activeBreakpoint: breakpoint,
+    };
+
+    this.emitter.emit('breakpoint:change', {
+      breakpoint,
+      previousBreakpoint,
+    });
 
     this.notifyStateSubscribers();
   }

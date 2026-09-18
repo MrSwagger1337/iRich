@@ -5,6 +5,7 @@
 
 import type { ReactNode } from 'react';
 import type {
+  Breakpoint,
   EditorConfig,
   EditorInstance,
   EditorState,
@@ -42,6 +43,11 @@ export interface IRichProviderProps {
   onSelectionChange?: (selectedNodeId: NodeId | null) => void;
 
   /**
+   * Callback fired whenever the active viewport breakpoint changes.
+   */
+  onBreakpointChange?: (breakpoint: Breakpoint) => void;
+
+  /**
    * React children to render within the provider.
    */
   children: ReactNode;
@@ -72,6 +78,21 @@ export interface UseIRichSelectionResult {
    * Clears the current node selection.
    */
   clearSelection: () => void;
+}
+
+/**
+ * Return type for useIRichBreakpoint().
+ */
+export interface UseIRichBreakpointResult {
+  /**
+   * The currently active viewport breakpoint in the editor.
+   */
+  breakpoint: Breakpoint;
+
+  /**
+   * Sets the active editor breakpoint.
+   */
+  setBreakpoint: (breakpoint: Breakpoint) => void;
 }
 
 /**
@@ -107,7 +128,10 @@ export interface UseIRichHistoryResult {
 /**
  * Return type for useIRich().
  */
-export interface UseIRichResult extends UseIRichSelectionResult, UseIRichHistoryResult {
+export interface UseIRichResult
+  extends UseIRichSelectionResult,
+    UseIRichHistoryResult,
+    UseIRichBreakpointResult {
   /**
    * The underlying EditorInstance.
    */

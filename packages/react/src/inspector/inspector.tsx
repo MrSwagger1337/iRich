@@ -5,8 +5,19 @@
  */
 
 import { useCallback, useState, type FC } from 'react';
-import type { JSONValue } from '@irich/core';
-import { useIRichEditor, useIRichNode, useIRichSelection } from '../hooks';
+import {
+  getResponsiveBreakpointValue,
+  resolveResponsiveValue,
+  setResponsiveBreakpointValue,
+  type JSONValue,
+  type ResponsiveValue,
+} from '@irich/core';
+import {
+  useIRichBreakpoint,
+  useIRichEditor,
+  useIRichNode,
+  useIRichSelection,
+} from '../hooks';
 import { RenderFieldControl } from './fields';
 import type { IRichInspectorProps } from './types';
 
@@ -36,12 +47,15 @@ export const DefaultInspectorEmptyState: FC = () => {
 export const IRichInspector: FC<IRichInspectorProps> = ({
   className,
   style,
+  breakpoint: propsBreakpoint,
   emptyState,
   renderHeader,
   renderFooter,
   onPropChange,
 }) => {
   const editor = useIRichEditor();
+  const { breakpoint: contextBreakpoint } = useIRichBreakpoint();
+  const activeBreakpoint = propsBreakpoint ?? contextBreakpoint;
   const { selectedNodeId, selectNode, clearSelection } = useIRichSelection();
   const selectedNode = useIRichNode(selectedNodeId);
   const [copied, setCopied] = useState(false);
@@ -53,16 +67,30 @@ export const IRichInspector: FC<IRichInspectorProps> = ({
     (fieldName: string, value: JSONValue) => {
       if (!selectedNode) return;
 
+      const fieldDef = componentDef?.fields?.[fieldName];
+      let nextPropValue: JSONValue = value;
+
+      if (fieldDef?.responsive) {
+        const currentRaw = selectedNode.props?.[fieldName] as
+          | ResponsiveValue<JSONValue>
+          | undefined;
+        nextPropValue = setResponsiveBreakpointValue(
+          currentRaw,
+          activeBreakpoint,
+          value,
+        ) as JSONValue;
+      }
+
       editor.commands.updateNode({
         nodeId: selectedNode.id,
         props: {
-          [fieldName]: value,
+          [fieldName]: nextPropValue,
         },
       });
 
-      onPropChange?.(fieldName, value, selectedNode);
+      onPropChange?.(fieldName, nextPropValue, selectedNode);
     },
-    [editor, selectedNode, onPropChange],
+    [editor, selectedNode, componentDef, activeBreakpoint, onPropChange],
   );
 
   const handleDuplicate = useCallback(() => {
@@ -172,16 +200,46 @@ export const IRichInspector: FC<IRichInspectorProps> = ({
 
       {/* 2. Schema-Driven Property Form */}
       <div className="irich-inspector-form">
-        <div className="irich-inspector-section-title">Properties</div>
+        <div className="irich-inspector-section-title-row">
+          <span className="irich-inspector-section-title">Properties</span>
+          <span className="irich-inspector-active-breakpoint-badge" title="Active Viewport Breakpoint">
+            {activeBreakpoint === 'mobile'
+              ? '📱 Mobile View'
+              : activeBreakpoint === 'tablet'
+                ? '💻 Tablet View'
+                : '🖥️ Desktop View'}
+          </span>
+        </div>
 
         {componentDef && componentDef.fields && Object.keys(componentDef.fields).length > 0 ? (
           Object.entries(componentDef.fields).map(([fieldName, fieldDef]) => {
             const inputId = `irich-field-${selectedNode.id}-${fieldName}`;
+            const rawValue = selectedNode.props && selectedNode.props[fieldName];
+            const isResponsive = Boolean(fieldDef.responsive);
+            const isOverridden = isResponsive
+              ? getResponsiveBreakpointValue(
+                  rawValue as ResponsiveValue<JSONValue>,
+                  activeBreakpoint,
+                ) !== undefined
+              : false;
 
-            // Resolve value with fallback
-            const currentValue =
-              selectedNode.props && selectedNode.props[fieldName] !== undefined
-                ? selectedNode.props[fieldName]
+            // Resolve display value for current breakpoint with fallbacks
+            const currentValue = isResponsive
+              ? (resolveResponsiveValue(
+                  rawValue as ResponsiveValue<JSONValue>,
+                  activeBreakpoint,
+                  fieldDef.defaultValue !== undefined
+                    ? fieldDef.defaultValue
+                    : fieldDef.type === 'number'
+                      ? 0
+                      : fieldDef.type === 'boolean'
+                        ? false
+                        : fieldDef.type === 'color'
+                          ? '#000000'
+                          : '',
+                ) ?? '')
+              : rawValue !== undefined
+                ? rawValue
                 : fieldDef.defaultValue !== undefined
                   ? fieldDef.defaultValue
                   : fieldDef.type === 'number'
@@ -200,6 +258,9 @@ export const IRichInspector: FC<IRichInspectorProps> = ({
                 fieldDefinition={fieldDef}
                 value={currentValue}
                 inputId={inputId}
+                isResponsive={isResponsive}
+                activeBreakpoint={activeBreakpoint}
+                isOverridden={isOverridden}
                 onChange={(nextVal) => handleFieldChange(fieldName, nextVal)}
               />
             );

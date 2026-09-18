@@ -348,6 +348,105 @@ describe('@irich/renderer', () => {
     });
   });
 
+  describe('Responsive Values & Breakpoint Resolution', () => {
+    const ResponsiveHeading: React.FC<NodeRendererProps<{ align?: string; text?: string }>> = ({
+      align,
+      text,
+      id,
+    }) => (
+      <h2 id={id} data-align={align}>
+        {text}
+      </h2>
+    );
+
+    const responsiveDoc: IRichDocument = {
+      version: '1.0.0',
+      root: {
+        id: 'root-1',
+        type: 'root',
+        props: {},
+        children: [
+          {
+            id: 'h-resp',
+            type: 'Heading',
+            props: {
+              text: 'Responsive Title',
+              align: {
+                desktop: 'left',
+                tablet: 'center',
+                mobile: 'right',
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    it('resolves desktop responsive override by default', () => {
+      const html = renderToString(
+        <IRichRenderer
+          document={responsiveDoc}
+          components={{ Heading: ResponsiveHeading }}
+        />,
+      );
+      expect(html).toContain('data-align="left"');
+    });
+
+    it('resolves tablet breakpoint override', () => {
+      const html = renderToString(
+        <IRichRenderer
+          document={responsiveDoc}
+          components={{ Heading: ResponsiveHeading }}
+          breakpoint="tablet"
+        />,
+      );
+      expect(html).toContain('data-align="center"');
+    });
+
+    it('resolves mobile breakpoint override', () => {
+      const html = renderToString(
+        <IRichRenderer
+          document={responsiveDoc}
+          components={{ Heading: ResponsiveHeading }}
+          breakpoint="mobile"
+        />,
+      );
+      expect(html).toContain('data-align="right"');
+    });
+
+    it('falls back to desktop value when tablet/mobile override is not defined', () => {
+      const partialDoc: IRichDocument = {
+        version: '1.0.0',
+        root: {
+          id: 'root-1',
+          type: 'root',
+          props: {},
+          children: [
+            {
+              id: 'h-partial',
+              type: 'Heading',
+              props: {
+                text: 'Partial Title',
+                align: {
+                  desktop: 'left',
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      const mobileHtml = renderToString(
+        <IRichRenderer
+          document={partialDoc}
+          components={{ Heading: ResponsiveHeading }}
+          breakpoint="mobile"
+        />,
+      );
+      expect(mobileHtml).toContain('data-align="left"');
+    });
+  });
+
   describe('SSR Compatibility with Example Document (Page, Container, Hero, Card)', () => {
     it('renders complete example document containing Page, Container, Hero, Card to string', () => {
       const html = renderToString(
