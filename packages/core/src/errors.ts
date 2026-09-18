@@ -20,7 +20,8 @@ export type ErrorCode =
   | 'INVALID_COMPONENT_DEFINITION'
   | 'DUPLICATE_PLUGIN'
   | 'PLUGIN_NOT_FOUND'
-  | 'PLUGIN_COMMAND_ERROR';
+  | 'PLUGIN_COMMAND_ERROR'
+  | 'STORAGE_ERROR';
 
 /**
  * Base class for all iRich engine errors.
@@ -137,5 +138,26 @@ export class ComponentNotFoundError extends IRichError {
 export class InvalidComponentError extends IRichError {
   constructor(message: string) {
     super(message, 'INVALID_COMPONENT_DEFINITION');
+  }
+}
+
+/**
+ * Thrown when a storage adapter fails during load, save, delete, or list.
+ */
+export class StorageError extends IRichError {
+  public readonly operation: 'load' | 'save' | 'delete' | 'list';
+  public readonly documentId?: string;
+
+  constructor(
+    operation: 'load' | 'save' | 'delete' | 'list',
+    message: string,
+    documentId?: string,
+  ) {
+    super(
+      `Storage error during "${operation}"${documentId ? ` for document "${documentId}"` : ''}: ${message}`,
+      'STORAGE_ERROR',
+    );
+    this.operation = operation;
+    this.documentId = documentId;
   }
 }

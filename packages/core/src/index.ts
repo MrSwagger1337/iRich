@@ -38,8 +38,16 @@ export {
   DuplicateComponentError,
   ComponentNotFoundError,
   InvalidComponentError,
+  StorageError,
   type ErrorCode,
 } from './errors';
+
+// Persistence & Storage
+export {
+  MemoryStorageAdapter,
+  type IRichStorageAdapter,
+  type MemoryStorageAdapterOptions,
+} from './storage';
 
 // Utilities
 export { generateId, isValidId } from './utils/id';

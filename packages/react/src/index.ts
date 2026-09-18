@@ -97,3 +97,13 @@ export type {
   RichTextToolbarProps,
   UseIRichTextOptions,
 } from '@irich/rich-text';
+
+// Persistence & Autosave
+export { LocalStorageAdapter, type LocalStorageAdapterOptions } from './storage/local-storage';
+export {
+  useIRichAutosave,
+  type AutosaveStatus,
+  type UseIRichAutosaveOptions,
+  type UseIRichAutosaveResult,
+} from './hooks/use-autosave';
+
