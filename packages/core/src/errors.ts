@@ -17,7 +17,10 @@ export type ErrorCode =
   | 'COMMAND_FAILED'
   | 'DUPLICATE_COMPONENT'
   | 'COMPONENT_NOT_FOUND'
-  | 'INVALID_COMPONENT_DEFINITION';
+  | 'INVALID_COMPONENT_DEFINITION'
+  | 'DUPLICATE_PLUGIN'
+  | 'PLUGIN_NOT_FOUND'
+  | 'PLUGIN_COMMAND_ERROR';
 
 /**
  * Base class for all iRich engine errors.

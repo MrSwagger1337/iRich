@@ -1,21 +1,27 @@
 /**
  * @irich/plugin-sdk
- * Extensibility API and helper functions for creating iRich plugins.
+ * Extensibility API, lifecycle manager, and helper functions for creating iRich plugins.
  */
 
-import type { IRichNode, Editor } from '@irich/core';
+// Plugin Definition
+export { definePlugin } from './plugin';
 
-export interface PluginContext {
-  editor: Editor;
-}
+// Plugin Manager & Lifecycle
+export { PluginManager, createPluginManager } from './manager';
 
-export interface IRichPlugin {
-  name: string;
-  version?: string;
-  init?: (context: PluginContext) => void;
-  renderNode?: (node: IRichNode) => unknown;
-}
+// Error Classes
+export {
+  DuplicatePluginError,
+  PluginNotFoundError,
+  PluginCommandError,
+} from './errors';
 
-export function definePlugin(plugin: IRichPlugin): IRichPlugin {
-  return plugin;
-}
+// Types
+export type {
+  IRichPlugin,
+  PluginContext,
+  PluginSetupFn,
+  PluginCleanupFn,
+  PluginCommandHandler,
+  PluginManagerConfig,
+} from './types';
