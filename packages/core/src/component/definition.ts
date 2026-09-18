@@ -78,6 +78,25 @@ export interface ComponentDefinition<
   readonly slots?: Readonly<Record<string, SlotDefinition>>;
 
   /**
+   * Whether this component can accept child components.
+   * If false, dropping children directly inside this component's default children array is prohibited.
+   * Defaults to true if not specified.
+   */
+  readonly canHaveChildren?: boolean;
+
+  /**
+   * Whitelist of component types permitted as direct children.
+   * If omitted, any registered component type can be placed inside (unless restricted by child rules).
+   */
+  readonly allowedChildren?: readonly string[];
+
+  /**
+   * Whitelist of component types permitted as direct parents.
+   * If omitted, this component can be placed inside any container component or the root.
+   */
+  readonly allowedParents?: readonly string[];
+
+  /**
    * Non-rendered component metadata or tags.
    */
   readonly meta?: Readonly<Record<string, JSONValue>>;

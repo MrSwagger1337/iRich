@@ -804,14 +804,129 @@ body {
   color: #fff;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 2px 8px;
   border-radius: 3px 3px 0 0;
   z-index: 20;
-  pointer-events: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.irich-node-badge:active {
+  cursor: grabbing;
+}
+
+.irich-node-badge-drag-icon {
+  margin-right: 4px;
+  opacity: 0.7;
+  font-size: 9px;
+  letter-spacing: -1px;
 }
 
 .irich-canvas-node-selected > .irich-node-badge {
-  display: block;
+  display: flex;
+  align-items: center;
+}
+
+.irich-canvas-node:hover > .irich-node-badge {
+  display: flex;
+  align-items: center;
+}
+
+.irich-canvas-node-dragging {
+  opacity: 0.35 !important;
+  outline: 1px dashed var(--primary) !important;
+}
+
+.irich-palette-item-dragging {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+/* Node Insertion Edge Targets */
+.irich-node-edge-target {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.irich-node-edge-top {
+  top: -6px;
+}
+
+.irich-node-edge-bottom {
+  bottom: -6px;
+}
+
+/* Visual Drop Indicator Lines */
+.irich-drop-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.irich-drop-indicator-top {
+  top: 4px;
+}
+
+.irich-drop-indicator-bottom {
+  bottom: 4px;
+}
+
+.irich-drop-indicator-line {
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.irich-drop-allowed .irich-drop-indicator-line {
+  background: #6366f1;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
+}
+
+.irich-drop-disallowed .irich-drop-indicator-line {
+  background: #f43f5e;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.8);
+}
+
+/* Droppable Container Highlight */
+.irich-container-droppable-active {
+  outline: 2px dashed rgba(99, 102, 241, 0.8) !important;
+  background-color: rgba(99, 102, 241, 0.05) !important;
+  transition: all 0.15s ease;
+}
+
+.irich-root-droppable-active {
+  outline: 2px dashed rgba(99, 102, 241, 0.6);
+  border-radius: var(--radius-md);
+}
+
+/* Empty Dropzones */
+.irich-empty-container-dropzone {
+  padding: 30px 20px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--text-subtle);
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.irich-empty-canvas-dropzone {
+  padding: 60px 20px;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  color: var(--text-subtle);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.01);
 }
 
 /* ==========================================================================

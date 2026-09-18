@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { IRichProvider } from '@irich/react';
+import { IRichDndProvider, IRichProvider } from '@irich/react';
 import { Canvas } from './components/canvas';
 import { Inspector } from './components/inspector';
 import { Palette } from './components/palette';
@@ -17,22 +17,24 @@ export default function PlaygroundPage() {
 
   return (
     <IRichProvider initialDocument={initialDocument} config={{ registry }}>
-      <div className="irich-app-container">
-        {/* Top Header Toolbar */}
-        <Toolbar viewport={viewport} onViewportChange={setViewport} />
+      <IRichDndProvider>
+        <div className="irich-app-container">
+          {/* Top Header Toolbar */}
+          <Toolbar viewport={viewport} onViewportChange={setViewport} />
 
-        {/* 3-Column Editor Shell */}
-        <div className="irich-main-workspace">
-          {/* Left: Component Palette */}
-          <Palette />
+          {/* 3-Column Editor Shell */}
+          <div className="irich-main-workspace">
+            {/* Left: Component Palette */}
+            <Palette />
 
-          {/* Center: Central Canvas */}
-          <Canvas viewport={viewport} />
+            {/* Center: Central Canvas */}
+            <Canvas viewport={viewport} />
 
-          {/* Right: Property Inspector */}
-          <Inspector />
+            {/* Right: Property Inspector */}
+            <Inspector />
+          </div>
         </div>
-      </div>
+      </IRichDndProvider>
     </IRichProvider>
   );
 }

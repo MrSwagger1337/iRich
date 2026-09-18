@@ -14,6 +14,7 @@ export const ContainerComponent = defineComponent({
   category: 'Layout',
   description: 'Flexible layout container for grouping and padding child elements.',
   icon: 'layout',
+  canHaveChildren: true,
   fields: {
     padding: {
       type: 'select',
@@ -66,6 +67,7 @@ export const HeadingComponent = defineComponent({
   category: 'Content',
   description: 'Section heading with customizable hierarchy and alignment.',
   icon: 'heading',
+  canHaveChildren: false,
   fields: {
     text: {
       type: 'text',
@@ -103,6 +105,7 @@ export const TextComponent = defineComponent({
   category: 'Content',
   description: 'Body text paragraph with typography styling options.',
   icon: 'type',
+  canHaveChildren: false,
   fields: {
     content: {
       type: 'textarea',
@@ -151,6 +154,7 @@ export const ButtonComponent = defineComponent({
   category: 'Content',
   description: 'Call-to-action button with interactive hover states.',
   icon: 'mouse-pointer',
+  canHaveChildren: false,
   fields: {
     label: {
       type: 'text',
@@ -193,6 +197,7 @@ export const CardComponent = defineComponent({
   category: 'Marketing',
   description: 'Interactive container card with tag badge, title, and description.',
   icon: 'credit-card',
+  canHaveChildren: true,
   fields: {
     title: {
       type: 'text',
@@ -229,6 +234,7 @@ export const HeroComponent = defineComponent({
   category: 'Marketing',
   description: 'Large high-impact hero header with badge, title, subtitle, and CTA.',
   icon: 'sparkles',
+  canHaveChildren: false,
   fields: {
     badge: {
       type: 'text',

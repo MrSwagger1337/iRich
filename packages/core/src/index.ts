@@ -82,6 +82,7 @@ export {
 export {
   defineComponent,
   createComponentRegistry,
+  canPlaceNode,
   BUILT_IN_FIELD_TYPES,
   type ComponentDefinition,
   type SlotDefinition,
@@ -103,6 +104,8 @@ export {
   type FieldDefinition,
   type FieldValidationResult,
   type FieldTypeDefinition,
+  type CanPlaceNodeOptions,
+  type PlacementResult,
 } from './component';
 
 // Editor Engine

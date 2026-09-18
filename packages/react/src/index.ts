@@ -46,3 +46,29 @@ export type {
   UseIRichResult,
   UseIRichSelectionResult,
 } from './types';
+
+export {
+  IRichDndContext,
+  IRichDndProvider,
+  InsertionIndicator,
+  useIRichCanvasDraggable,
+  useIRichDndState,
+  useIRichDroppableContainer,
+  useIRichNodeDropTarget,
+  useIRichPaletteDraggable,
+} from './dnd';
+
+export type {
+  CanvasNodeDragData,
+  DropEdge,
+  DropTargetData,
+  IRichDndProviderProps,
+  IRichDndState,
+  IRichDragData,
+  InsertionIndicatorProps,
+  PaletteDragData,
+  UseCanvasDraggableOptions,
+  UseDroppableContainerOptions,
+  UseNodeDropTargetOptions,
+  UsePaletteDraggableOptions,
+} from './dnd';

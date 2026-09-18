@@ -6,3 +6,4 @@
 export * from './fields';
 export * from './definition';
 export * from './registry';
+export * from './placement';

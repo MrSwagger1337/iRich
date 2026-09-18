@@ -1,13 +1,25 @@
 /**
- * React Component Renderers for iRich Playground with interactive canvas selection.
+ * React Component Renderers for iRich Playground with interactive canvas selection and DnD reordering.
  */
 
-import React, { type CSSProperties, type ReactNode } from 'react';
+'use client';
+
+import React, { useMemo, type CSSProperties, type ReactNode } from 'react';
+import { findParent } from '@irich/core';
 import type { ComponentMap, NodeRendererProps } from '@irich/renderer';
-import { useIRichSelection } from '@irich/react';
+import {
+  InsertionIndicator,
+  useIRichCanvasDraggable,
+  useIRichDndState,
+  useIRichDocument,
+  useIRichDroppableContainer,
+  useIRichNodeDropTarget,
+  useIRichSelection,
+} from '@irich/react';
 
 /**
- * Interactive canvas node wrapper providing click-to-select, hover outlines, and selection badges.
+ * Interactive canvas node wrapper providing click-to-select, drag handle, hover outlines,
+ * selection badges, and top/bottom insertion drop targets.
  */
 interface NodeWrapperProps {
   id: string;
@@ -19,7 +31,38 @@ interface NodeWrapperProps {
 
 export function NodeWrapper({ id, type, children, style, className }: NodeWrapperProps) {
   const { selectedNodeId, selectNode } = useIRichSelection();
+  const document = useIRichDocument();
+  const dndState = useIRichDndState();
   const isSelected = selectedNodeId === id;
+
+  const parentLoc = useMemo(() => findParent(document, id), [document, id]);
+  const parentId = parentLoc?.parent.id ?? 'root';
+  const index = parentLoc?.index ?? 0;
+  const slot = parentLoc?.slotName;
+
+  const { setNodeRef: setDragRef, attributes, listeners, isDragging } = useIRichCanvasDraggable({
+    nodeId: id,
+    componentType: type,
+    parentId,
+    index,
+    slot,
+  });
+
+  const { setNodeRef: setTopDropRef, isOver: isTopOver } = useIRichNodeDropTarget({
+    nodeId: id,
+    parentId,
+    index,
+    slot,
+    edge: 'top',
+  });
+
+  const { setNodeRef: setBottomDropRef, isOver: isBottomOver } = useIRichNodeDropTarget({
+    nodeId: id,
+    parentId,
+    index,
+    slot,
+    edge: 'bottom',
+  });
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -28,11 +71,17 @@ export function NodeWrapper({ id, type, children, style, className }: NodeWrappe
 
   return (
     <div
+      ref={setDragRef}
       data-irich-node-id={id}
       data-irich-node-type={type}
       data-irich-selected={isSelected ? 'true' : 'false'}
-      className={`irich-canvas-node ${isSelected ? 'irich-canvas-node-selected' : ''} ${className ?? ''}`}
-      style={style}
+      className={`irich-canvas-node ${isSelected ? 'irich-canvas-node-selected' : ''} ${
+        isDragging ? 'irich-canvas-node-dragging' : ''
+      } ${className ?? ''}`}
+      style={{
+        ...style,
+        opacity: isDragging ? 0.35 : 1,
+      }}
       onClick={handleClick}
       role="button"
       tabIndex={0}
@@ -43,11 +92,23 @@ export function NodeWrapper({ id, type, children, style, className }: NodeWrappe
         }
       }}
     >
-      {/* Node selection badge */}
-      <div className="irich-node-badge">
+      {/* Top Drop Edge Target & Indicator */}
+      <div ref={setTopDropRef} className="irich-node-edge-target irich-node-edge-top">
+        <InsertionIndicator edge="top" visible={isTopOver} allowed={dndState.isAllowed} />
+      </div>
+
+      {/* Node selection badge & drag handle */}
+      <div className="irich-node-badge" {...attributes} {...listeners} title="Drag to move">
+        <span className="irich-node-badge-drag-icon">⋮⋮</span>
         <span className="irich-node-badge-type">{type}</span>
       </div>
+
       {children}
+
+      {/* Bottom Drop Edge Target & Indicator */}
+      <div ref={setBottomDropRef} className="irich-node-edge-target irich-node-edge-bottom">
+        <InsertionIndicator edge="bottom" visible={isBottomOver} allowed={dndState.isAllowed} />
+      </div>
     </div>
   );
 }
@@ -61,6 +122,10 @@ export const ContainerRenderer: React.FC<
     layout?: string;
   }>
 > = ({ node, padding, maxWidth, background, layout, children }) => {
+  const { setNodeRef, isOver } = useIRichDroppableContainer({
+    parentId: node.id,
+  });
+
   const paddingMap: Record<string, string> = {
     none: '0',
     small: '1rem',
@@ -77,11 +142,15 @@ export const ContainerRenderer: React.FC<
 
   const isGrid2 = layout === 'grid-2';
   const isGrid3 = layout === 'grid-3';
+  const hasChildren = node.children && node.children.length > 0;
 
   return (
     <NodeWrapper id={node.id} type="Container" className="irich-container-node">
       <div
-        className={`irich-container-inner bg-${background ?? 'transparent'}`}
+        ref={setNodeRef}
+        className={`irich-container-inner bg-${background ?? 'transparent'} ${
+          isOver ? 'irich-container-droppable-active' : ''
+        }`}
         style={{
           padding: paddingMap[padding ?? 'medium'] ?? '2rem',
           maxWidth: maxWidthMap[maxWidth ?? 'wide'] ?? '1200px',
@@ -99,7 +168,13 @@ export const ContainerRenderer: React.FC<
                 : 'irich-layout-vertical'
           }
         >
-          {children}
+          {hasChildren ? (
+            children
+          ) : (
+            <div className="irich-empty-container-dropzone">
+              <span>Drop components inside Container</span>
+            </div>
+          )}
         </div>
       </div>
     </NodeWrapper>
@@ -185,9 +260,18 @@ export const CardRenderer: React.FC<
     variant?: string;
   }>
 > = ({ node, title, description, tag, variant, children }) => {
+  const { setNodeRef, isOver } = useIRichDroppableContainer({
+    parentId: node.id,
+  });
+
   return (
     <NodeWrapper id={node.id} type="Card" className="irich-card-wrapper">
-      <div className={`irich-card irich-card-${variant ?? 'elevated'}`}>
+      <div
+        ref={setNodeRef}
+        className={`irich-card irich-card-${variant ?? 'elevated'} ${
+          isOver ? 'irich-container-droppable-active' : ''
+        }`}
+      >
         {tag && <div className="irich-card-tag">{tag}</div>}
         <h3 className="irich-card-title">{title ?? 'Card Title'}</h3>
         {description && <p className="irich-card-desc">{description}</p>}
@@ -244,8 +328,26 @@ export const HeroRenderer: React.FC<
 };
 
 // 7. Root Renderer
-export const RootRenderer: React.FC<NodeRendererProps> = ({ children }) => {
-  return <div className="irich-root-container">{children}</div>;
+export const RootRenderer: React.FC<NodeRendererProps> = ({ node, children }) => {
+  const { setNodeRef, isOver } = useIRichDroppableContainer({
+    parentId: 'root',
+  });
+  const hasChildren = node.children && node.children.length > 0;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`irich-root-container ${isOver ? 'irich-root-droppable-active' : ''}`}
+    >
+      {hasChildren ? (
+        children
+      ) : (
+        <div className="irich-empty-canvas-dropzone">
+          <p>Drag components here to start building your page.</p>
+        </div>
+      )}
+    </div>
+  );
 };
 
 /**
