@@ -7,18 +7,32 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MrSwagger1337/iRich.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/MrSwagger1337/iRich#readme",
+  "bugs": "https://github.com/MrSwagger1337/iRich/issues",
+  "keywords": [
+    "irich",
+    "editor",
+    "wysiwyg",
+    "page-builder",
+    "content-editor",
+    "headless",
+    "framework-agnostic"
   ],
   "scripts": {
     "build": "tsup",
