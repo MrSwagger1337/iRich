@@ -1,0 +1,413 @@
+:root {
+  --bg-dark: #0b0f19;
+  --bg-card: #131b2e;
+  --bg-surface: #1e293b;
+  --bg-surface-elevated: #243049;
+  --border: #243049;
+  --border-muted: #334155;
+  --text-main: #f8fafc;
+  --text-sub: #94a3b8;
+  --text-muted: #64748b;
+  --vite-purple: #bd34fe;
+  --vite-cyan: #41d1ff;
+  --vite-gradient: linear-gradient(135deg, #bd34fe 0%, #41d1ff 100%);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* NAVBAR */
+.vite-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: rgba(19, 27, 46, 0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.vite-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.vite-logo-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+}
+
+.vite-logo-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--vite-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: #fff;
+  font-weight: 800;
+}
+
+.vite-badge-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(65, 209, 255, 0.12);
+  color: #7dd3fc;
+  border: 1px solid rgba(65, 209, 255, 0.25);
+}
+
+.vite-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* BUTTONS */
+.vite-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.vite-btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.vite-btn-md {
+  padding: 0.55rem 1.125rem;
+  font-size: 0.875rem;
+}
+
+.vite-btn-primary {
+  background: var(--vite-gradient);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(189, 52, 254, 0.3);
+}
+.vite-btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(189, 52, 254, 0.5);
+}
+
+.vite-btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+.vite-btn-secondary:hover {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-muted);
+}
+
+.vite-btn-ghost {
+  background: transparent;
+  color: var(--text-sub);
+}
+.vite-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+/* HERO */
+.vite-hero {
+  position: relative;
+  padding: 5rem 1.5rem;
+  text-align: center;
+  overflow: hidden;
+}
+
+.vite-hero-glow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(189, 52, 254, 0.25) 0%, rgba(65, 209, 255, 0.15) 50%, transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.vite-hero-content {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.vite-badge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  background: rgba(189, 52, 254, 0.15);
+  border: 1px solid rgba(189, 52, 254, 0.3);
+  color: #e9d5ff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.vite-hero-title {
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.vite-hero-subtitle {
+  font-size: 1.15rem;
+  color: var(--text-sub);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* CARD */
+.vite-card {
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+.vite-card:hover {
+  border-color: #41d1ff;
+  transform: translateY(-2px);
+}
+
+.vite-card-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(65, 209, 255, 0.15);
+  color: #7dd3fc;
+}
+
+/* ALERT */
+.vite-alert {
+  padding: 0.875rem 1.25rem;
+  border-radius: var(--radius-md);
+  margin: 1.5rem auto;
+  max-width: 960px;
+  display: flex;
+  align-items: center;
+  font-size: 0.9375rem;
+}
+.vite-alert-success {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+}
+.vite-alert-info {
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  color: #67e8f9;
+}
+.vite-alert-warning {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fcd34d;
+}
+
+/* CONTAINER */
+.vite-container {
+  margin: 0 auto;
+  width: 100%;
+}
+.vite-max-w-narrow { max-width: 720px; }
+.vite-max-w-medium { max-width: 960px; }
+.vite-max-w-wide { max-width: 1200px; }
+.vite-max-w-full { max-width: 100%; }
+.vite-pad-none { padding: 0; }
+.vite-pad-small { padding: 1rem; }
+.vite-pad-medium { padding: 2.5rem 1.5rem; }
+.vite-pad-large { padding: 4.5rem 1.5rem; }
+.vite-bg-transparent { background: transparent; }
+.vite-bg-subtle { background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-lg); }
+.vite-bg-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+
+/* HEADINGS */
+.vite-heading { margin-bottom: 0.75rem; }
+.vite-heading-h1 { font-size: 2.75rem; font-weight: 800; }
+.vite-heading-h2 { font-size: 2rem; font-weight: 700; }
+.vite-heading-h3 { font-size: 1.35rem; font-weight: 600; }
+.vite-align-left { text-align: left; }
+.vite-align-center { text-align: center; }
+.vite-align-right { text-align: right; }
+
+/* RICH TEXT */
+.vite-richtext {
+  color: var(--text-sub);
+  line-height: 1.7;
+}
+
+/* VISUAL EDITOR LAYOUT */
+.vite-editor-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #060911;
+}
+
+.vite-editor-header {
+  height: 52px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  z-index: 20;
+}
+
+.vite-editor-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.vite-editor-sidebar-left {
+  width: 250px;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.vite-editor-canvas-container {
+  flex: 1;
+  background: #060911;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.vite-editor-sidebar-right {
+  width: 320px;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+/* PALETTE */
+.vite-palette-section {
+  padding: 1rem;
+}
+.vite-palette-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+.vite-palette-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.vite-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+.vite-palette-item:hover {
+  background: var(--bg-surface);
+  border-color: var(--vite-purple);
+  transform: translateX(2px);
+}
+
+/* JSON MODAL / DRAWER */
+.vite-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+}
+.vite-drawer-content {
+  width: min(600px, 100vw);
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  height: 100%;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+}
+.vite-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.vite-json-pre {
+  flex: 1;
+  background: #060911;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8125rem;
+  color: #7dd3fc;
+}

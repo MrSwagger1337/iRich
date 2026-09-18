@@ -322,9 +322,21 @@ importers:
       '@irich/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@irich/plugin-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk
       '@irich/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@irich/renderer':
+        specifier: workspace:*
+        version: link:../../packages/renderer
+      '@irich/rich-text':
+        specifier: workspace:*
+        version: link:../../packages/rich-text
+      '@irich/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       react:
         specifier: ^19.0.0
         version: 19.3.0
