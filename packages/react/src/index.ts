@@ -72,3 +72,28 @@ export type {
   UseNodeDropTargetOptions,
   UsePaletteDraggableOptions,
 } from './dnd';
+
+// Rich Text Integration
+export {
+  IRichTextEditor,
+  IRichTextRenderer,
+  RichTextFloatingToolbar,
+  RichTextToolbar,
+  createEmptyRichText,
+  createRichTextFromText,
+  ensureRichTextDocument,
+  isRichTextDocument,
+  richTextToPlainText,
+  useIRichText,
+} from '@irich/rich-text';
+
+export type {
+  IRichTextController,
+  IRichTextEditorProps,
+  IRichTextRendererProps,
+  RichTextDocument,
+  RichTextMark,
+  RichTextNode,
+  RichTextToolbarProps,
+  UseIRichTextOptions,
+} from '@irich/rich-text';

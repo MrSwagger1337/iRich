@@ -4,17 +4,21 @@
 
 'use client';
 
-import React, { useMemo, type CSSProperties, type ReactNode } from 'react';
-import { findParent } from '@irich/core';
+import React, { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { findParent, type JSONValue } from '@irich/core';
 import type { ComponentMap, NodeRendererProps } from '@irich/renderer';
 import {
+  IRichTextEditor,
+  IRichTextRenderer,
   InsertionIndicator,
   useIRichCanvasDraggable,
   useIRichDndState,
   useIRichDocument,
   useIRichDroppableContainer,
+  useIRichEditor,
   useIRichNodeDropTarget,
   useIRichSelection,
+  type RichTextDocument,
 } from '@irich/react';
 
 /**
@@ -327,7 +331,94 @@ export const HeroRenderer: React.FC<
   );
 };
 
-// 7. Root Renderer
+// 7. RichText Renderer
+export const RichTextRenderer: React.FC<
+  NodeRendererProps<{
+    content?: RichTextDocument | string;
+    placeholder?: string;
+  }>
+> = ({ node, content, placeholder }) => {
+  const editor = useIRichEditor();
+  const { selectedNodeId } = useIRichSelection();
+  const isSelected = selectedNodeId === node.id;
+  const [isEditing, setIsEditing] = useState(false);
+
+  // If node gets deselected, exit editing mode
+  useEffect(() => {
+    if (!isSelected && isEditing) {
+      setIsEditing(false);
+    }
+  }, [isSelected, isEditing]);
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditing(true);
+  };
+
+  const handleContentChange = (newDoc: RichTextDocument) => {
+    editor.commands.updateNode({
+      nodeId: node.id,
+      props: {
+        content: newDoc as unknown as JSONValue,
+      },
+    });
+  };
+
+  return (
+    <NodeWrapper id={node.id} type="RichText" className="irich-richtext-wrapper">
+      <div
+        className={`irich-richtext-container ${isEditing ? 'editing' : 'view'}`}
+        onDoubleClick={handleDoubleClick}
+      >
+        {isEditing ? (
+          <div className="irich-richtext-editor-active">
+            <IRichTextEditor
+              content={content}
+              onChange={handleContentChange}
+              placeholder={placeholder ?? 'Start typing rich text...'}
+              editable={true}
+              showFloatingToolbar={true}
+              autoFocus={true}
+            />
+            <div className="irich-richtext-editing-hint">
+              <span>Editing Rich Text • Click outside or press Done to finish</span>
+              <button
+                type="button"
+                className="irich-richtext-done-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(false);
+                }}
+              >
+                ✓ Done
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="irich-richtext-preview" title="Double click to edit">
+            <IRichTextRenderer content={content} />
+            {isSelected && !isEditing && (
+              <div className="irich-richtext-click-prompt">
+                <button
+                  type="button"
+                  className="irich-richtext-edit-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditing(true);
+                  }}
+                >
+                  ✎ Edit Rich Text
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </NodeWrapper>
+  );
+};
+
+// 8. Root Renderer
 export const RootRenderer: React.FC<NodeRendererProps> = ({ node, children }) => {
   const { setNodeRef, isOver } = useIRichDroppableContainer({
     parentId: 'root',
@@ -358,7 +449,9 @@ export const playgroundComponentRenderers: ComponentMap = {
   Container: ContainerRenderer,
   Heading: HeadingRenderer,
   Text: TextRenderer,
+  RichText: RichTextRenderer,
   Button: ButtonRenderer,
   Card: CardRenderer,
   Hero: HeroRenderer,
 };
+

@@ -275,6 +275,22 @@ export const HeroComponent = defineComponent({
   },
 });
 
+export const RichTextComponent = defineComponent({
+  type: 'RichText',
+  label: 'Rich Text',
+  category: 'Content',
+  description: 'Multi-line formatted text with headings, lists, quotes, links, and inline styles.',
+  icon: 'file-text',
+  canHaveChildren: false,
+  fields: {
+    placeholder: {
+      type: 'text',
+      label: 'Placeholder',
+      defaultValue: 'Start typing rich text...',
+    },
+  },
+});
+
 /**
  * Creates and initializes the playground component registry.
  */
@@ -283,6 +299,7 @@ export function createPlaygroundRegistry(): ComponentRegistry {
   registry.register(ContainerComponent);
   registry.register(HeadingComponent);
   registry.register(TextComponent);
+  registry.register(RichTextComponent);
   registry.register(ButtonComponent);
   registry.register(CardComponent);
   registry.register(HeroComponent);
@@ -293,7 +310,9 @@ export const playgroundComponentsList = [
   ContainerComponent,
   HeadingComponent,
   TextComponent,
+  RichTextComponent,
   ButtonComponent,
   CardComponent,
   HeroComponent,
 ];
+

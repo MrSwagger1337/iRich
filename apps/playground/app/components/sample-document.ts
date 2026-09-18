@@ -106,6 +106,61 @@ export function createPlaygroundSampleDocument(): IRichDocument {
               ],
             }),
 
+            // Rich Text Demonstration Block
+            createNode({
+              id: 'richtext-demo',
+              type: 'RichText',
+              props: {
+                content: {
+                  type: 'doc',
+                  content: [
+                    {
+                      type: 'heading',
+                      attrs: { level: 3 },
+                      content: [
+                        { type: 'text', text: '✦ Structured Rich-Text Authoring' },
+                      ],
+                    },
+                    {
+                      type: 'paragraph',
+                      content: [
+                        { type: 'text', text: 'iRich incorporates ' },
+                        { type: 'text', text: 'first-class rich text editing', marks: [{ type: 'bold' }] },
+                        { type: 'text', text: ' with inline formatting such as ' },
+                        { type: 'text', text: 'italic emphasis', marks: [{ type: 'italic' }] },
+                        { type: 'text', text: ', ' },
+                        { type: 'text', text: 'code marks', marks: [{ type: 'code' }] },
+                        { type: 'text', text: ', and ' },
+                        {
+                          type: 'text',
+                          text: 'custom hyperlinks',
+                          marks: [{ type: 'link', attrs: { href: 'https://github.com/MrSwagger1337/iRich' } }],
+                        },
+                        { type: 'text', text: '. Double-click this block to edit inline with the floating toolbar!' },
+                      ],
+                    },
+                    {
+                      type: 'bulletList',
+                      content: [
+                        {
+                          type: 'listItem',
+                          content: [{ type: 'text', text: 'Strictly JSON-serializable ProseMirror AST' }],
+                        },
+                        {
+                          type: 'listItem',
+                          content: [{ type: 'text', text: 'Lightweight SSR-safe production renderer' }],
+                        },
+                        {
+                          type: 'listItem',
+                          content: [{ type: 'text', text: 'Decoupled controller and extensible marks' }],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            }),
+
             // Call to Action Box
             createNode({
               id: 'cta-container',

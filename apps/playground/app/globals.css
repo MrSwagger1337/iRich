@@ -1147,6 +1147,312 @@ body {
 }
 
 /* ==========================================================================
+   Rich Text Component & Typography
+   ========================================================================== */
+.irich-richtext-wrapper {
+  width: 100%;
+}
+
+.irich-richtext-container {
+  position: relative;
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+  min-height: 48px;
+}
+
+.irich-richtext-container.editing {
+  outline: 2px solid var(--primary);
+  background: rgba(99, 102, 241, 0.03);
+  padding: 12px;
+  border-radius: var(--radius-md);
+}
+
+.irich-richtext-preview {
+  position: relative;
+  padding: 4px 0;
+}
+
+.irich-richtext-click-prompt {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.irich-richtext-edit-btn,
+.irich-richtext-done-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.15s ease;
+}
+
+.irich-richtext-edit-btn:hover,
+.irich-richtext-done-btn:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.irich-richtext-editing-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-subtle);
+}
+
+/* Rich Text Typography & Markups */
+.irich-rich-text-content,
+.irich-rich-prosemirror-wrapper .ProseMirror {
+  font-family: inherit;
+  color: var(--text-main);
+  line-height: 1.7;
+}
+
+.irich-rich-paragraph,
+.ProseMirror p {
+  margin: 0.5rem 0 1rem 0;
+}
+
+.irich-rich-heading,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4 {
+  font-weight: 700;
+  color: #fff;
+  margin: 1.25rem 0 0.5rem 0;
+}
+
+.irich-rich-h1, .ProseMirror h1 { font-size: 2rem; }
+.irich-rich-h2, .ProseMirror h2 { font-size: 1.6rem; }
+.irich-rich-h3, .ProseMirror h3 { font-size: 1.3rem; }
+.irich-rich-h4, .ProseMirror h4 { font-size: 1.1rem; }
+
+.irich-rich-bullet-list,
+.irich-rich-ordered-list,
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.irich-rich-bullet-list,
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.irich-rich-ordered-list,
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.irich-rich-list-item,
+.ProseMirror li {
+  margin: 0.25rem 0;
+}
+
+.irich-rich-blockquote,
+.ProseMirror blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: var(--text-muted);
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.irich-rich-code-block,
+.ProseMirror pre {
+  background: #090d16;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  color: #38bdf8;
+}
+
+.irich-inline-code,
+.ProseMirror code {
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--accent-cyan);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.irich-rich-link,
+.ProseMirror a {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+.irich-rich-link:hover,
+.ProseMirror a:hover {
+  color: #7dd3fc;
+}
+
+/* ProseMirror Native Focus Override */
+.ProseMirror {
+  outline: none;
+  min-height: 60px;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-subtle);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Floating & Docked Formatting Toolbars */
+.irich-rich-floating-wrapper {
+  position: sticky;
+  top: -12px;
+  z-index: 50;
+  margin-bottom: 8px;
+}
+
+.irich-rich-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: #18181b;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.irich-rich-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.irich-rich-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background-color: var(--border-strong);
+  margin: 0 4px;
+}
+
+.irich-rich-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+}
+
+.irich-rich-btn:hover {
+  background: var(--bg-sidebar-hover);
+  color: var(--text-main);
+}
+
+.irich-rich-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.irich-rich-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.irich-rich-btn-done {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.4);
+  margin-left: 4px;
+}
+
+.irich-rich-btn-done:hover {
+  background: #10b981;
+  color: #fff;
+}
+
+/* Link Popover in Toolbar */
+.irich-rich-link-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 6px;
+  background: #18181b;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: var(--shadow-lg);
+  z-index: 60;
+}
+
+.irich-rich-link-input {
+  background: #090d16;
+  border: 1px solid var(--border-subtle);
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  outline: none;
+  min-width: 200px;
+}
+
+.irich-rich-link-submit-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.irich-rich-link-cancel-btn {
+  background: transparent;
+  color: var(--text-subtle);
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* ==========================================================================
    Modal (JSON Inspection)
    ========================================================================== */
 .irich-modal-backdrop {
