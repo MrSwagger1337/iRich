@@ -1,12 +1,11 @@
 /**
- * Component Palette Sidebar for iRich Playground.
+ * Component Palette Sidebar for iRich Playground using canonical IRichPaletteItem from @irich/react.
  */
 
 'use client';
 
 import React, { useMemo } from 'react';
-import { createNode } from '@irich/core';
-import { useIRichEditor, useIRichPaletteDraggable, useIRichSelection } from '@irich/react';
+import { IRichPaletteItem } from '@irich/react';
 import { playgroundComponentsList } from './registry';
 
 const categoryOrder = ['Layout', 'Content', 'Marketing'];
@@ -61,61 +60,7 @@ const iconMap: Record<string, React.ReactNode> = {
   ),
 };
 
-function PaletteItem({
-  comp,
-  icon,
-  onInsert,
-}: {
-  comp: (typeof playgroundComponentsList)[number];
-  icon: React.ReactNode;
-  onInsert: (type: string) => void;
-}) {
-  const { setNodeRef, attributes, listeners, isDragging } = useIRichPaletteDraggable({
-    componentType: comp.type,
-    label: comp.label,
-    icon: comp.icon,
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className={`irich-palette-item ${isDragging ? 'irich-palette-item-dragging' : ''}`}
-      onClick={() => onInsert(comp.type)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          onInsert(comp.type);
-        }
-      }}
-    >
-      <div className="irich-palette-item-icon">{icon}</div>
-      <div className="irich-palette-item-info">
-        <div className="irich-palette-item-title">{comp.label}</div>
-        <div className="irich-palette-item-desc">{comp.description}</div>
-      </div>
-      <button
-        type="button"
-        className="irich-palette-add-btn"
-        title={`Insert ${comp.label}`}
-        aria-label={`Insert ${comp.label}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onInsert(comp.type);
-        }}
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
 export function Palette() {
-  const editor = useIRichEditor();
-  const { selectedNodeId, selectNode } = useIRichSelection();
-
   // Group components by category
   const categories = useMemo(() => {
     const map = new Map<string, typeof playgroundComponentsList>();
@@ -128,40 +73,6 @@ export function Palette() {
     }
     return map;
   }, []);
-
-  const handleInsert = (type: string) => {
-    const timestamp = Date.now().toString(36).slice(-4);
-    const newId = `${type.toLowerCase()}-${timestamp}`;
-
-    const registry = editor.getRegistry();
-    const defaultProps = registry ? registry.getDefaultProps(type) : {};
-    const def = registry?.get(type);
-    const canHaveChildren = def ? def.canHaveChildren !== false : false;
-
-    const newNode = createNode({
-      id: newId,
-      type,
-      props: defaultProps,
-      children: canHaveChildren ? [] : undefined,
-    });
-
-    // Check if a container is currently selected to insert into it
-    let targetParentId = 'root';
-    if (selectedNodeId) {
-      const selectedNode = editor.getNode(selectedNodeId);
-      if (selectedNode?.type === 'Container' || selectedNode?.type === 'root') {
-        targetParentId = selectedNodeId;
-      }
-    }
-
-    editor.commands.insertNode({
-      node: newNode,
-      parentId: targetParentId,
-    });
-
-    // Select the new node
-    selectNode(newId);
-  };
 
   return (
     <aside className="irich-sidebar irich-palette-sidebar">
@@ -186,12 +97,26 @@ export function Palette() {
                 {components.map((comp) => {
                   const icon = iconMap[comp.type] || iconMap.Card;
                   return (
-                    <PaletteItem
+                    <IRichPaletteItem
                       key={comp.type}
-                      comp={comp}
-                      icon={icon}
-                      onInsert={handleInsert}
-                    />
+                      componentType={comp.type}
+                      label={comp.label}
+                      description={comp.description}
+                    >
+                      <div className="irich-palette-item-icon">{icon}</div>
+                      <div className="irich-palette-item-info">
+                        <div className="irich-palette-item-title">{comp.label}</div>
+                        <div className="irich-palette-item-desc">{comp.description}</div>
+                      </div>
+                      <button
+                        type="button"
+                        className="irich-palette-add-btn"
+                        title={`Insert ${comp.label}`}
+                        aria-label={`Insert ${comp.label}`}
+                      >
+                        +
+                      </button>
+                    </IRichPaletteItem>
                   );
                 })}
               </div>
@@ -202,4 +127,5 @@ export function Palette() {
     </aside>
   );
 }
+
 

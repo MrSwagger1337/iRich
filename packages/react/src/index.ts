@@ -14,6 +14,7 @@ export {
   useIRichHistory,
   useIRichNode,
   useIRichSelection,
+  useIRichUIDirection,
 } from './hooks';
 
 export {
@@ -43,10 +44,12 @@ export type {
 export type {
   IRichContextValue,
   IRichProviderProps,
+  IRichUIDirection,
   UseIRichBreakpointResult,
   UseIRichHistoryResult,
   UseIRichResult,
   UseIRichSelectionResult,
+  UseIRichUIDirectionResult,
 } from './types';
 
 export {
@@ -115,4 +118,45 @@ export {
   useIRichKeyboardShortcuts,
   type UseIRichKeyboardShortcutsOptions,
 } from './hooks/use-keyboard-shortcuts';
+
+// Document JSON Studio
+export {
+  IRichDocumentJsonStudio,
+  IRichDocumentJsonModal,
+  useIRichJsonStudio,
+  type JsonStudioStatus,
+  type UseIRichJsonStudioOptions,
+  type UseIRichJsonStudioResult,
+  type IRichDocumentJsonStudioProps,
+  type IRichDocumentJsonModalProps,
+} from './json-studio';
+
+// Visual Canvas & DnD Foundation
+export {
+  IRichCanvas,
+  IRichCanvasNode,
+  IRichNodeActionBar,
+  IRichPaletteItem,
+  useIRichPaletteDraggable as useIRichPaletteDrag,
+  calculateDropPosition,
+  resolveInsertionLocation,
+  executeDrop,
+  useIRichNodeActions,
+  IRICH_DND_MIME,
+  type InsertionPosition,
+  type InsertionTarget,
+  type InsertionResolution,
+  type NodeActionsState,
+  type NodeActionsRenderProps,
+  type EmptySlotRenderProps,
+  type DropIndicatorRenderProps,
+  type IRichCanvasProps,
+  type IRichCanvasNodeProps,
+  type IRichNodeActionBarProps,
+  type IRichPaletteItemProps,
+  type UsePaletteDraggableOptions as UsePaletteDragOptions,
+  type UsePaletteDraggableResult as UsePaletteDragResult,
+} from './canvas';
+
+
 

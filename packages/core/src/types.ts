@@ -23,6 +23,34 @@ export type NodeId = string;
 /**
  * An individual node within the iRich document hierarchy.
  */
+/**
+ * Text direction enum supported by iRich documents and nodes.
+ */
+export type IRichDirection = 'ltr' | 'rtl' | 'auto';
+
+/**
+ * Non-rendered structural and formatting metadata on an individual document node.
+ */
+export interface IRichNodeMeta {
+  /**
+   * Text direction override for this node subtree.
+   */
+  readonly dir?: IRichDirection;
+
+  /**
+   * Language/locale override tag (e.g. 'en', 'ar', 'fr') for this node subtree.
+   */
+  readonly lang?: string;
+
+  /**
+   * Arbitrary JSON-serializable custom metadata properties.
+   */
+  readonly [key: string]: JSONValue | undefined;
+}
+
+/**
+ * An individual node within the iRich document hierarchy.
+ */
 export interface IRichNode {
   /**
    * Unique and stable identifier.
@@ -50,9 +78,29 @@ export interface IRichNode {
   readonly slots?: Readonly<Record<string, readonly IRichNode[]>>;
 
   /**
-   * Non-rendered node metadata (e.g. collapsed, locked, label).
+   * Non-rendered node metadata (e.g. dir, lang, collapsed, locked, label).
    */
-  readonly meta?: Readonly<Record<string, JSONValue>>;
+  readonly meta?: Readonly<IRichNodeMeta>;
+}
+
+/**
+ * Top-level canonical document metadata schema.
+ */
+export interface IRichDocumentMetadata {
+  /**
+   * Document-level locale/language tag (e.g. 'ar', 'en-US', 'nl', 'fr').
+   */
+  readonly locale?: string;
+
+  /**
+   * Document-level default reading/writing direction.
+   */
+  readonly direction?: IRichDirection;
+
+  /**
+   * Arbitrary JSON-serializable custom document metadata.
+   */
+  readonly [key: string]: JSONValue | undefined;
 }
 
 /**
@@ -70,9 +118,9 @@ export interface IRichDocument {
   readonly root: IRichNode;
 
   /**
-   * Document-level metadata (e.g., title, author, description).
+   * Document-level metadata (e.g., locale, direction, title, author, description).
    */
-  readonly metadata?: Readonly<Record<string, JSONValue>>;
+  readonly metadata?: Readonly<IRichDocumentMetadata>;
 }
 
 /**
@@ -146,7 +194,7 @@ export interface RemoveNodePayload {
 export interface UpdateNodePayload {
   nodeId: NodeId;
   props?: Record<string, JSONValue>;
-  meta?: Record<string, JSONValue>;
+  meta?: IRichNodeMeta;
 }
 
 /**
@@ -190,6 +238,7 @@ export interface EditorCommands {
   copyNode(nodeId?: NodeId): boolean;
   cutNode(nodeId?: NodeId): boolean;
   pasteNode(payload?: PasteNodePayload | NodeId): NodeId | undefined;
+  replaceDocument(document: IRichDocument): void;
   selectNode(nodeId: NodeId | null): void;
   clearSelection(): void;
   hoverNode(nodeId: NodeId | null): void;
@@ -204,6 +253,10 @@ export interface EditorCommands {
  */
 export interface EditorEventMap {
   'document:change': {
+    document: IRichDocument;
+    previousDocument: IRichDocument;
+  };
+  'document:replace': {
     document: IRichDocument;
     previousDocument: IRichDocument;
   };
@@ -223,8 +276,8 @@ export interface EditorEventMap {
     nodeId: NodeId;
     previousProps: Record<string, JSONValue>;
     nextProps: Record<string, JSONValue>;
-    previousMeta?: Record<string, JSONValue>;
-    nextMeta?: Record<string, JSONValue>;
+    previousMeta?: Readonly<IRichNodeMeta>;
+    nextMeta?: Readonly<IRichNodeMeta>;
   };
   'node:move': {
     nodeId: NodeId;

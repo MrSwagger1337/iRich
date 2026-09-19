@@ -1,6 +1,8 @@
+'use client';
+
 /**
  * @irich/rich-text
- * Hook for creating and managing an isolated rich-text editor instance.
+ * React hook for managing headless rich-text editor instance via Tiptap.
  */
 
 import { useEffect, useMemo } from 'react';
@@ -16,6 +18,8 @@ import { createEmptyRichText, ensureRichTextDocument } from './utils';
 export function useIRichText({
   content,
   editable = true,
+  dir,
+  lang,
   onChange,
   onFocus,
   onBlur,
@@ -27,8 +31,15 @@ export function useIRichText({
   const initialAst = useMemo(() => ensureRichTextDocument(content), []);
 
   const editor = useEditor({
+    editorProps: {
+      attributes: {
+        ...(dir ? { dir } : {}),
+        ...(lang ? { lang } : {}),
+      },
+    },
     extensions: [
       StarterKit.configure({
+        link: false,
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
         },
@@ -64,6 +75,22 @@ export function useIRichText({
       editor.setEditable(editable);
     }
   }, [editor, editable]);
+
+  // Synchronize external direction and language changes
+  useEffect(() => {
+    if (editor && editor.view?.dom) {
+      if (dir) {
+        editor.view.dom.setAttribute('dir', dir);
+      } else {
+        editor.view.dom.removeAttribute('dir');
+      }
+      if (lang) {
+        editor.view.dom.setAttribute('lang', lang);
+      } else {
+        editor.view.dom.removeAttribute('lang');
+      }
+    }
+  }, [editor, dir, lang]);
 
   // Construct stable, decoupled controller interface
   const controller: IRichTextController = useMemo(() => {

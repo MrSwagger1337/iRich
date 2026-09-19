@@ -236,11 +236,24 @@ class ComponentRegistryImpl implements ComponentRegistry {
       const handler = this.fieldTypes.get(fieldDef.type);
 
       if (handler && handler.validate) {
-        const res: FieldValidationResult = handler.validate(value, fieldDef);
-        if (!res.valid) {
-          errors.push(
-            `Field "${fieldName}" on component "${type}": ${res.error ?? 'Invalid value'}`,
-          );
+        if (fieldDef.responsive && value && typeof value === 'object' && !Array.isArray(value)) {
+          for (const [bp, bpVal] of Object.entries(value as Record<string, unknown>)) {
+            if (bpVal !== undefined) {
+              const res = handler.validate(bpVal, fieldDef);
+              if (!res.valid) {
+                errors.push(
+                  `Field "${fieldName}" on component "${type}" (${bp}): ${res.error ?? 'Invalid value'}`,
+                );
+              }
+            }
+          }
+        } else {
+          const res: FieldValidationResult = handler.validate(value, fieldDef);
+          if (!res.valid) {
+            errors.push(
+              `Field "${fieldName}" on component "${type}": ${res.error ?? 'Invalid value'}`,
+            );
+          }
         }
       }
     }

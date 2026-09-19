@@ -9,6 +9,13 @@ import type { IRichContextValue } from './types';
 export const IRichContext = createContext<IRichContextValue | null>(null);
 
 /**
+ * Accesses the optional IRichContextValue without throwing if outside <IRichProvider />.
+ */
+export function useOptionalIRichContext(): IRichContextValue | null {
+  return useContext(IRichContext);
+}
+
+/**
  * Accesses the raw IRichContextValue. Throws if invoked outside <IRichProvider />.
  */
 export function useIRichContext(): IRichContextValue {
@@ -20,3 +27,4 @@ export function useIRichContext(): IRichContextValue {
   }
   return context;
 }
+

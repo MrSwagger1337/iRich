@@ -3,7 +3,14 @@
  * Document creation, tree traversal, node searching, and cloning utilities.
  */
 
-import type { IRichDocument, IRichNode, JSONValue, NodeId } from '../types';
+import type {
+  IRichDocument,
+  IRichDocumentMetadata,
+  IRichNode,
+  IRichNodeMeta,
+  JSONValue,
+  NodeId,
+} from '../types';
 import { generateId } from './id';
 
 export const CURRENT_DOCUMENT_VERSION = '1.0.0';
@@ -17,7 +24,7 @@ export interface CreateNodeOptions {
   props?: Record<string, JSONValue>;
   children?: readonly IRichNode[] | IRichNode[];
   slots?: Record<string, readonly IRichNode[] | IRichNode[]>;
-  meta?: Record<string, JSONValue>;
+  meta?: IRichNodeMeta;
 }
 
 /**
@@ -48,7 +55,7 @@ export function createNode(options: CreateNodeOptions): IRichNode {
 export interface CreateDocumentOptions {
   version?: string;
   root?: Partial<CreateNodeOptions>;
-  metadata?: Record<string, JSONValue>;
+  metadata?: IRichDocumentMetadata;
 }
 
 /**
@@ -238,7 +245,7 @@ export function cloneNode(node: IRichNode, regenerateIds: boolean = false): IRic
   return {
     id: newId,
     type: node.type,
-    props: { ...node.props },
+    props: Object.freeze({ ...node.props }),
     ...(clonedChildren ? { children: Object.freeze(clonedChildren) } : {}),
     ...(clonedSlots
       ? {
@@ -247,6 +254,6 @@ export function cloneNode(node: IRichNode, regenerateIds: boolean = false): IRic
           ),
         }
       : {}),
-    ...(node.meta ? { meta: { ...node.meta } } : {}),
+    ...(node.meta ? { meta: Object.freeze({ ...node.meta }) } : {}),
   };
 }

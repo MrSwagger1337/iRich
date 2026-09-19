@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import {
-  useIRichDocument,
+  IRichDocumentJsonModal,
   useIRichEditor,
   useIRichHistory,
   useIRichSelection,
@@ -22,11 +22,9 @@ interface ToolbarProps {
 
 export function Toolbar({ viewport, onViewportChange }: ToolbarProps) {
   const editor = useIRichEditor();
-  const document = useIRichDocument();
   const { canUndo, canRedo, undo, redo } = useIRichHistory();
   const { selectedNodeId, clearSelection } = useIRichSelection();
   const [showJsonModal, setShowJsonModal] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const handleResetDocument = () => {
     if (window.confirm('Reset document to sample template? Any unsaved changes will be lost.')) {
@@ -49,14 +47,6 @@ export function Toolbar({ viewport, onViewportChange }: ToolbarProps) {
     }
   };
 
-  const jsonString = JSON.stringify(document, null, 2);
-
-  const handleCopyJson = () => {
-    navigator.clipboard.writeText(jsonString).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
 
   return (
     <>
@@ -201,43 +191,14 @@ export function Toolbar({ viewport, onViewportChange }: ToolbarProps) {
         </div>
       </header>
 
-      {/* JSON State Inspection Modal */}
+      {/* Canonical Document JSON Studio Modal */}
       {showJsonModal && (
-        <div
-          className="irich-modal-backdrop"
-          onClick={() => setShowJsonModal(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-title"
-        >
-          <div className="irich-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="irich-modal-header">
-              <div className="irich-modal-title" id="modal-title">
-                <span>IRichDocument JSON State</span>
-                <span className="irich-badge-version">v{document.version}</span>
-              </div>
-              <div className="irich-modal-actions">
-                <button
-                  type="button"
-                  className="irich-btn irich-btn-sm irich-btn-secondary"
-                  onClick={handleCopyJson}
-                >
-                  {copied ? '✓ Copied' : 'Copy JSON'}
-                </button>
-                <button
-                  type="button"
-                  className="irich-btn irich-btn-sm irich-btn-ghost"
-                  onClick={() => setShowJsonModal(false)}
-                  aria-label="Close modal"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-            <pre className="irich-modal-code">{jsonString}</pre>
-          </div>
-        </div>
+        <IRichDocumentJsonModal
+          isOpen={showJsonModal}
+          onClose={() => setShowJsonModal(false)}
+        />
       )}
     </>
   );
 }
+

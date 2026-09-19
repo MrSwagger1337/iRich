@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * @irich/rich-text
  * Interactive rich-text editor component.
@@ -17,6 +19,8 @@ export function IRichTextEditor({
   content,
   onChange,
   editable = true,
+  dir,
+  lang,
   placeholder = 'Write something...',
   showFloatingToolbar = true,
   showToolbar = false,
@@ -36,6 +40,8 @@ export function IRichTextEditor({
   const { editor, controller } = useIRichText({
     content,
     editable,
+    dir,
+    lang,
     placeholder,
     onChange,
     onFocus,
@@ -48,6 +54,8 @@ export function IRichTextEditor({
     return (
       <IRichTextRenderer
         content={content}
+        dir={dir}
+        lang={lang}
         className={`irich-rich-editor-ssr ${className}`.trim()}
         style={style}
       />
@@ -57,6 +65,8 @@ export function IRichTextEditor({
   return (
     <div
       className={`irich-rich-editor-container ${editable ? 'editable' : 'readonly'} ${className}`.trim()}
+      dir={dir}
+      lang={lang}
       style={style}
     >
       {/* Top Static Toolbar */}

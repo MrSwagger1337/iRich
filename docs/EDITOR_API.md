@@ -47,6 +47,7 @@ export interface EditorCommands {
   moveNode(payload: MoveNodePayload): void;
   updateNodeProps(payload: UpdatePropsPayload): void;
   duplicateNode(nodeId: NodeId): NodeId;
+  replaceDocument(document: IRichDocument): void;
   selectNode(nodeId: NodeId | null): void;
   hoverNode(nodeId: NodeId | null): void;
   undo(): void;
@@ -88,11 +89,25 @@ All mutations occur through formal command execution:
 | moveNode          | Moves node across parents/slots. Forbids moving into descendants.  |
 | updateNodeProps   | Shallow/deep merges prop updates into the targeted node.           |
 | duplicateNode     | Deep-clones subtree, generating fresh unique IDs for every node.   |
+| replaceDocument   | Atomically validates and swaps entire document tree & metadata.    |
 | selectNode        | Updates active selection pointer for Inspector and canvas outlines.|
 | undo / redo       | Steps through transaction journal with atomic state rollbacks.     |
 | batch             | Combines multiple sequential commands into a single undoable step. |
 +-------------------+--------------------------------------------------------------------+
 ```
+
+### `replaceDocument(document: IRichDocument)` Semantics
+
+The `replaceDocument` command is designed for complete document replacement (such as importing documents from a CMS or applying an AI-transformed version):
+
+1. **Pre-mutation Validation**: Runs full invariant validation (`validateDocumentInvariants`). If the document is invalid (e.g., duplicate IDs, missing root, malformed nodes), the command is aborted and editor state remains completely unchanged.
+2. **Immutable Swap**: Deeply clones and freezes the replacement document, ensuring no external mutable references are shared with editor state.
+3. **Single-step Undo/Redo**: Records exactly ONE history entry. Calling `editor.commands.undo()` restores the entire previous document and metadata in a single step. Calling `redo()` re-applies the replacement.
+4. **Redo Stack Clearing**: Replacing a document after performing an undo properly clears the redo stack branch.
+5. **Deterministic Selection**:
+   - If the currently selected `nodeId` exists in the replacement document, the selection is preserved.
+   - If the selected `nodeId` does not exist in the replacement document, `selection` is reset to `null`.
+6. **Event Lifecycle**: Emits `'document:replace'` with `{ previousDocument, document }`, followed by the standard `'document:change'` event.
 
 ---
 

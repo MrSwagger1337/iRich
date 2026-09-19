@@ -1,5 +1,5 @@
 /**
- * Default sample landing page document for Next.js example.
+ * Default sample landing page document for Next.js reference example.
  * Completely JSON-serializable canonical document structure.
  */
 
@@ -9,7 +9,7 @@ export const initialNextjsDocument: IRichDocument = createDocument({
   metadata: {
     title: 'iRich Next.js Starter Landing Page',
     author: 'iRich Engineering',
-    description: 'Production-ready showcase of embeddable visual content editing in Next.js.',
+    description: 'Reference demonstration of embeddable visual content editing in Next.js.',
   },
   root: {
     id: 'root',
@@ -20,27 +20,26 @@ export const initialNextjsDocument: IRichDocument = createDocument({
         id: 'hero-1',
         type: 'Hero',
         props: {
-          badge: '✦ Next.js 15 + iRich Visual Builder',
-          title: 'The Visual Content Editor for Next.js Developers',
+          badge: '✦ Next.js App Router + iRich',
+          title: 'Visual Page Composition for Modern Next.js Apps',
           subtitle:
-            'iRich bridges modular React component composition with structured rich-text authoring. Completely decoupled from proprietary hosting with pure JSON state.',
+            'iRich bridges structured rich-text authoring with modular React components. Fast, SSR-compatible, and fully serializable to clean JSON.',
           align: 'center',
-          primaryCtaText: 'Open Visual Editor',
-          primaryCtaUrl: '/editor',
-          secondaryCtaText: 'Explore Features',
-          secondaryCtaUrl: '#features',
+          ctaText: 'Open Visual Editor',
+          ctaUrl: '/editor',
+          secondaryCtaText: 'Explore Architecture',
+          secondaryCtaUrl: '#architecture',
         },
       }),
 
-      // 2. HIGHLIGHT RICH-TEXT CONTAINER
+      // 2. PROSE HIGHLIGHT SECTION
       createNode({
-        id: 'container-intro',
+        id: 'container-prose',
         type: 'Container',
         props: {
-          maxWidth: 'wide',
+          maxWidth: 'medium',
           padding: 'medium',
           background: 'card',
-          layout: 'stack',
         },
         children: [
           createNode({
@@ -65,16 +64,16 @@ export const initialNextjsDocument: IRichDocument = createDocument({
                     content: [
                       {
                         type: 'text',
-                        text: 'Unlike traditional page builders that inject bloated HTML blobs or lock your team into proprietary cloud platforms, ',
+                        text: 'Unlike monolithic WYSIWYG editors or proprietary CMS systems that inject messy HTML blobs into your pages, ',
                       },
                       {
                         type: 'text',
                         marks: [{ type: 'bold' }],
-                        text: 'iRich treats your document as a strictly typed JSON Abstract Syntax Tree (AST)',
+                        text: 'iRich represents every page as a strictly typed JSON Abstract Syntax Tree (AST)',
                       },
                       {
                         type: 'text',
-                        text: '. Every component is a standard React component registered in your codebase.',
+                        text: '. Components are standard React components defined directly in your application codebase.',
                       },
                     ],
                   },
@@ -85,69 +84,99 @@ export const initialNextjsDocument: IRichDocument = createDocument({
         ],
       }),
 
-      // 3. FEATURES SECTION WITH FEATURE CARDS
+      // 3. CORE ARCHITECTURE HIGHLIGHTS
       createNode({
-        id: 'features-section',
-        type: 'Features',
+        id: 'container-cards',
+        type: 'Container',
         props: {
-          sectionTitle: 'Architected for Performance & Extensibility',
-          sectionSubtitle:
-            'Everything you need to deliver high-performance visual editing experiences to non-technical editors.',
-          columns: '3',
-          align: 'center',
+          maxWidth: 'wide',
+          padding: 'medium',
+          background: 'transparent',
         },
         children: [
           createNode({
-            id: 'feature-card-1',
-            type: 'FeatureCard',
+            id: 'heading-arch',
+            type: 'Heading',
             props: {
-              icon: 'database',
-              title: 'Pure JSON Serializable State',
-              description:
-                'Documents serialize to clean JSON with stable node IDs. No runtime closures, React elements, or DOM nodes stored in state.',
-              tag: 'Core Principle',
-              color: 'indigo',
+              text: 'Core Architectural Guarantees',
+              level: 'h2',
+              align: 'center',
+              color: 'default',
             },
           }),
           createNode({
-            id: 'feature-card-2',
-            type: 'FeatureCard',
+            id: 'card-1',
+            type: 'Card',
             props: {
-              icon: 'zap',
-              title: 'SSR & RSC Compatible',
+              tag: 'SSR & RSC',
+              title: 'Server-Side Rendering',
               description:
-                '@irich/renderer is a lightweight standalone React package that renders without loading editor UI or drag-and-drop controllers.',
-              tag: 'Next.js First',
-              color: 'emerald',
+                '@irich/renderer has zero browser dependencies and renders directly on the server in React Server Components.',
+              variant: 'default',
+              buttonText: 'View Docs',
+              buttonUrl: '#',
             },
           }),
           createNode({
-            id: 'feature-card-3',
-            type: 'FeatureCard',
+            id: 'card-2',
+            type: 'Card',
             props: {
-              icon: 'sparkles',
-              title: 'AI Action Protocol & Sandbox',
+              tag: 'Zero Lock-in',
+              title: 'Pure JSON Document Model',
               description:
-                'AI assistants suggest structured, sandboxed editor actions with prototype pollution guards and dry-run validation.',
-              tag: 'AI Ready',
-              color: 'purple',
+                'Documents serialize to clean JSON with stable node IDs. No runtime closures, React elements, or DOM nodes in state.',
+              variant: 'highlight',
+              buttonText: 'Inspect Schema',
+              buttonUrl: '#',
+            },
+          }),
+          createNode({
+            id: 'card-3',
+            type: 'Card',
+            props: {
+              tag: 'Fine-Grained',
+              title: 'Isolated State Transitions',
+              description:
+                'Mutations execute through transactional commands with linear undo/redo and selective React subscriptions.',
+              variant: 'default',
+              buttonText: 'Learn Commands',
+              buttonUrl: '#',
             },
           }),
         ],
       }),
 
-      // 4. CALL TO ACTION BANNER
+      // 4. CALL TO ACTION SECTION
       createNode({
-        id: 'cta-banner',
-        type: 'CTA',
+        id: 'container-cta',
+        type: 'Container',
         props: {
-          headline: 'Ready to Experience Visual Editing?',
-          description:
-            'Launch the live editor to inspect real-time property controls, responsive breakpoint toggles, and drag-and-drop page composition.',
-          buttonText: 'Launch Visual Editor Now',
-          buttonUrl: '/editor',
-          variant: 'gradient',
+          maxWidth: 'medium',
+          padding: 'medium',
+          background: 'subtle',
         },
+        children: [
+          createNode({
+            id: 'heading-cta',
+            type: 'Heading',
+            props: {
+              text: 'Ready to Experience Visual Authoring?',
+              level: 'h2',
+              align: 'center',
+              color: 'gradient',
+            },
+          }),
+          createNode({
+            id: 'btn-cta',
+            type: 'Button',
+            props: {
+              label: 'Launch Visual Studio →',
+              url: '/editor',
+              variant: 'primary',
+              size: 'lg',
+            },
+          }),
+        ],
       }),
     ],
   },

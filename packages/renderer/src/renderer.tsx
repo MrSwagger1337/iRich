@@ -28,6 +28,8 @@ export const IRichRenderer: React.FC<IRichRendererProps> = ({
   document,
   components,
   breakpoint = 'desktop',
+  direction: explicitDirection,
+  lang: explicitLang,
   fallback,
   onUnknownComponent = 'fallback',
   onError,
@@ -37,6 +39,18 @@ export const IRichRenderer: React.FC<IRichRendererProps> = ({
   if (!document || !document.root) {
     return null;
   }
+
+  // Direction precedence:
+  // 1. explicit renderer direction
+  // 2. document.metadata.direction
+  // 3. undefined -> inherit naturally from host DOM (do NOT force LTR fallback)
+  const resolvedDir = explicitDirection ?? document.metadata?.direction;
+
+  // Language precedence:
+  // 1. explicit renderer lang
+  // 2. document.metadata.locale
+  // 3. undefined -> inherit naturally from host DOM
+  const resolvedLang = explicitLang ?? document.metadata?.locale;
 
   const resolvedComponents: ComponentMap =
     components instanceof RendererRegistry ? components.getAll() : components;
@@ -53,9 +67,16 @@ export const IRichRenderer: React.FC<IRichRendererProps> = ({
     />
   );
 
-  if (className || style) {
+  // If root container attributes are present (dir, lang, className, style), render root container element
+  if (resolvedDir !== undefined || resolvedLang !== undefined || className || style) {
     return (
-      <div className={className} style={style} data-irich-renderer-root="">
+      <div
+        className={className}
+        style={style}
+        dir={resolvedDir}
+        lang={resolvedLang}
+        data-irich-renderer-root=""
+      >
         {content}
       </div>
     );
@@ -77,6 +98,8 @@ export function renderDocument(
       document={document}
       components={components}
       breakpoint={options.breakpoint}
+      direction={options.direction}
+      lang={options.lang}
       fallback={options.fallback}
       onUnknownComponent={options.onUnknownComponent}
       onError={options.onError}

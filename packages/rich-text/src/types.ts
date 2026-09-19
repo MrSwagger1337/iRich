@@ -4,7 +4,7 @@
  */
 
 import type { CSSProperties, ReactNode } from 'react';
-import type { JSONValue } from '@irich/core';
+import type { IRichDirection, JSONValue } from '@irich/core';
 
 /**
  * Inline mark applied to a text span (e.g. bold, italic, strike, code, link).
@@ -163,6 +163,16 @@ export interface UseIRichTextOptions {
   readonly editable?: boolean;
 
   /**
+   * Semantic direction for the editing surface ('ltr' | 'rtl' | 'auto').
+   */
+  readonly dir?: IRichDirection;
+
+  /**
+   * Semantic language tag for the editing surface (e.g. 'ar', 'en').
+   */
+  readonly lang?: string;
+
+  /**
    * Placeholder text shown when editor is empty.
    */
   readonly placeholder?: string;
@@ -196,6 +206,16 @@ export interface IRichTextEditorProps {
    * Rich-text content AST or plain text string.
    */
   readonly content?: RichTextDocument | string;
+
+  /**
+   * Semantic text direction ('ltr' | 'rtl' | 'auto').
+   */
+  readonly dir?: IRichDirection;
+
+  /**
+   * Semantic language code (e.g. 'ar', 'en', 'fr').
+   */
+  readonly lang?: string;
 
   /**
    * Callback fired upon content changes.
@@ -261,6 +281,16 @@ export interface IRichTextRendererProps {
    * Rich-text document AST to render as React elements.
    */
   readonly content?: RichTextDocument | string | null;
+
+  /**
+   * Semantic text direction ('ltr' | 'rtl' | 'auto').
+   */
+  readonly dir?: IRichDirection;
+
+  /**
+   * Semantic language code (e.g. 'ar', 'en', 'fr').
+   */
+  readonly lang?: string;
 
   /**
    * Optional CSS class name.

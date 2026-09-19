@@ -28,6 +28,29 @@ export interface JSONObject {
 export type JSONArray = JSONValue[];
 
 /**
+ * Text and layout direction.
+ */
+export type IRichDirection = 'ltr' | 'rtl' | 'auto';
+
+/**
+ * Document-level structural metadata.
+ */
+export interface IRichDocumentMetadata {
+  locale?: string;
+  direction?: IRichDirection;
+  [key: string]: JSONValue | undefined;
+}
+
+/**
+ * Node-level structural metadata.
+ */
+export interface IRichNodeMeta {
+  dir?: IRichDirection;
+  lang?: string;
+  [key: string]: JSONValue | undefined;
+}
+
+/**
  * Unique, stable identifier for a node within a document.
  */
 export type NodeId = string;
@@ -63,9 +86,9 @@ export interface IRichNode {
   slots?: Record<string, IRichNode[]>;
 
   /**
-   * Non-rendered node metadata (e.g., collapsed state in layers panel, locked status).
+   * Non-rendered node structural metadata (e.g., dir, lang, locked status).
    */
-  meta?: Record<string, JSONValue>;
+  meta?: IRichNodeMeta;
 }
 
 /**
@@ -83,9 +106,9 @@ export interface IRichDocument {
   root: IRichNode;
 
   /**
-   * Document-level metadata (e.g., title, SEO tags, canvas background color, author).
+   * Document-level metadata (e.g., locale, direction, title, author).
    */
-  metadata?: Record<string, JSONValue>;
+  metadata?: IRichDocumentMetadata;
 }
 ```
 
@@ -244,3 +267,199 @@ export interface MigrationRegistry {
 
 - When loading a document, if `doc.version < CURRENT_VERSION`, the engine runs sequential migrations: `v1.0.0 -> v1.1.0 -> v2.0.0`.
 - Migrations run headless in `@irich/core` before the document is mounted into the editor or renderer.
+
+---
+
+## 6. Headless JSON Round-Trip & Diagnostics Engine
+
+`@irich/core` provides pure headless utilities to parse, validate, and format documents for headless CMS storage and external AI workflows (`Export JSON -> External AI transform -> Paste JSON -> Atomic Apply`).
+
+### Utilities
+
+```typescript
+import {
+  parseDocumentJSON,
+  validateDocumentJSON,
+  formatDocumentJSON,
+} from '@irich/core';
+
+// Safe parsing (catches syntax errors and wraps them in structured diagnostics)
+const parseResult = parseDocumentJSON(rawJsonString);
+
+// Comprehensive invariant, component, placement, schema, and security validation
+const validationResult = validateDocumentJSON(rawJsonStringOrObject, registry);
+
+// Deterministic 2-space indented formatting suitable for AI prompts and version control
+const formattedJson = formatDocumentJSON(doc);
+```
+
+### Structured Diagnostic Model
+
+Validation diagnostics provide machine-readable error codes and rich contextual metadata so UI components (e.g., error modals) can highlight exact problem locations without string parsing.
+
+```typescript
+export type ValidationErrorCode =
+  | 'INVALID_JSON'
+  | 'INVALID_DOCUMENT_VERSION'
+  | 'INVALID_ROOT'
+  | 'INVALID_NODE_ID'
+  | 'DUPLICATE_NODE_ID'
+  | 'UNKNOWN_COMPONENT'
+  | 'INVALID_PROP'
+  | 'INVALID_PLACEMENT'
+  | 'INVALID_DIRECTION'
+  | 'UNSAFE_VALUE';
+
+export interface ValidationErrorDetail {
+  code: ValidationErrorCode;
+  message: string;
+  path?: string;
+  nodeId?: string;
+  nodeType?: string;
+  propName?: string;
+}
+
+export interface DocumentValidationResult {
+  valid: boolean;
+  errors: string[];
+  diagnostics: ValidationErrorDetail[];
+}
+```
+
+---
+
+## 7. Package Validation Boundaries
+
+To preserve strict architectural isolation:
+- `@irich/core` **MUST NOT** import or depend on `@irich/rich-text`, Tiptap, or ProseMirror.
+- RichText content trees stored inside node `props` are validated by `@irich/core` for pure JSON-serializability and prototype safety.
+- Deep domain-specific validation of RichText AST structures is delegated to custom prop validators registered with the `ComponentRegistry` via `ComponentDefinition.props[field].validate`.
+
+---
+
+## 8. Canonical Document Example (Arabic RTL with English LTR Override)
+
+The canonical document below demonstrates document-level Arabic (`ar`) metadata with RTL direction, containing an editorial callout node overriding direction to `ltr` and language to `en`:
+
+```json
+{
+  "version": "1.0.0",
+  "metadata": {
+    "locale": "ar",
+    "direction": "rtl",
+    "title": "مقدمة إلى الذكاء الاصطناعي التوليدي",
+    "author": "فريق التحرير"
+  },
+  "root": {
+    "id": "root",
+    "type": "root",
+    "props": {},
+    "children": [
+      {
+        "id": "heading-1",
+        "type": "Heading",
+        "props": {
+          "level": 1,
+          "content": "الذكاء الاصطناعي ومستقبل النشر الرقمي"
+        }
+      },
+      {
+        "id": "paragraph-1",
+        "type": "Paragraph",
+        "props": {
+          "content": "تتيح النظم الحديثة كتابة وتنسيق المقالات بمرونة غير مسبوقة، بما يدعم اللغات متعددة الاتجاهات."
+        }
+      },
+      {
+        "id": "callout-english-quote",
+        "type": "Callout",
+        "props": {
+          "variant": "quote",
+          "title": "Technical Quote"
+        },
+        "meta": {
+          "dir": "ltr",
+          "lang": "en"
+        },
+        "children": [
+          {
+            "id": "paragraph-en-1",
+            "type": "Paragraph",
+            "props": {
+              "content": "Simplicity is prerequisite for reliability. — Edsger W. Dijkstra"
+            }
+          }
+        ]
+      },
+      {
+        "id": "paragraph-2",
+        "type": "Paragraph",
+        "props": {
+          "content": "نستنتج من ذلك أن وضوح البنية التحتية هو الأساس لأي نظام برمجي ناجح."
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 9. Multilingual, Direction & Language Architecture
+
+
+iRich provides first-class support for multilingual, bidirectional (Bidi), and right-to-left (RTL) content (Arabic, English, French, Dutch, etc.).
+
+### 9.1 Direction & Language Resolution Precedence
+
+To support seamless embedding inside both LTR and RTL host applications, `@irich/renderer` follows strict semantic inheritance rules without forcing an arbitrary `'ltr'` fallback:
+
+#### Direction Precedence
+1. **Explicit Renderer Prop**: `props.direction` passed to `<IRichRenderer direction="..." />`
+2. **Document Metadata**: `document.metadata.direction` (`'ltr' | 'rtl' | 'auto'`)
+3. **Semantic Host Inheritance**: `undefined` -> No `dir` attribute is emitted on the root container, allowing natural inheritance from the surrounding host DOM.
+
+#### Language Precedence
+1. **Explicit Renderer Prop**: `props.lang` passed to `<IRichRenderer lang="..." />`
+2. **Document Metadata**: `document.metadata.locale` (e.g. `'ar'`, `'en-US'`, `'fr'`)
+3. **Semantic Host Inheritance**: `undefined` -> No `lang` attribute is emitted on the root container, allowing natural inheritance from the surrounding host DOM.
+
+### 9.2 Node-Level Direction & Language Overrides
+
+Individual nodes can declare localized direction and language overrides in `node.meta`:
+
+```json
+{
+  "id": "quote-english",
+  "type": "Quote",
+  "props": { "quote": "Simplicity is prerequisite for reliability." },
+  "meta": {
+    "dir": "ltr",
+    "lang": "en"
+  }
+}
+```
+
+- Node-level direction and language are passed directly into the registered component renderer via `NodeRendererProps`:
+  ```typescript
+  export interface NodeRendererProps<TProps = Record<string, JSONValue>> {
+    node: IRichNode;
+    props: TProps;
+    dir?: IRichDirection;
+    lang?: string;
+    // ...
+  }
+  ```
+- Component authors attach these props directly to their real semantic HTML tags (`<blockquote dir={dir} lang={lang}>`).
+- **No `display: contents` wrapper**: iRich does NOT wrap nodes in synthetic `<div style={{ display: 'contents' }}>` elements, avoiding accessibility tree destruction, drag-and-drop bounding rect calculation failures, and event-targeting discrepancies.
+
+### 9.3 Independent UI Chrome Direction vs Document Direction
+
+- **Document Content Direction**: `IRichDirection = 'ltr' | 'rtl' | 'auto'`
+- **Editor UI Direction**: `IRichUIDirection = 'ltr' | 'rtl'` (strictly binary; `'auto'` is not used for editor chrome).
+- Editor studio chrome (toolbar, palette, inspector) and visual canvas operate independently, enabling:
+  - UI: LTR & Document: RTL (e.g., English CMS authoring Arabic article)
+  - UI: RTL & Document: RTL (e.g., native Arabic CMS authoring Arabic article)
+  - UI: RTL & Document: LTR (e.g., native Arabic CMS authoring English article)
+
+

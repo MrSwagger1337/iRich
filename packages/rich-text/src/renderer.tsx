@@ -108,7 +108,11 @@ function renderAstNode(node: RichTextNode, index: number): ReactNode {
 
     case 'codeBlock':
       return (
-        <pre key={key} className="irich-rich-code-block">
+        <pre
+          key={key}
+          className="irich-rich-code-block"
+          dir={node.attrs?.dir ? String(node.attrs.dir) : 'ltr'}
+        >
           <code>{node.content?.map((child, i) => renderAstNode(child, i))}</code>
         </pre>
       );
@@ -136,6 +140,8 @@ function renderAstNode(node: RichTextNode, index: number): ReactNode {
  */
 export function IRichTextRenderer({
   content,
+  dir,
+  lang,
   className = '',
   style,
 }: IRichTextRendererProps) {
@@ -143,7 +149,12 @@ export function IRichTextRenderer({
   const nodes = doc.content ?? [];
 
   return (
-    <div className={`irich-rich-text-content ${className}`.trim()} style={style}>
+    <div
+      className={`irich-rich-text-content ${className}`.trim()}
+      dir={dir}
+      lang={lang}
+      style={style}
+    >
       {nodes.map((node, index) => renderAstNode(node, index))}
     </div>
   );

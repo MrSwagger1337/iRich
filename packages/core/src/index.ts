@@ -18,7 +18,10 @@ export {
   type JSONArray,
   type JSONValue,
   type NodeId,
+  type IRichDirection,
+  type IRichNodeMeta,
   type IRichNode,
+  type IRichDocumentMetadata,
   type IRichDocument,
   type EditorState,
   type EditorConfig,
@@ -86,10 +89,27 @@ export {
 export {
   isJSONValue,
   validateDocument,
+  type ValidationErrorCode,
   type ValidationResult,
   type ValidationErrorDetail,
   type ValidateDocumentOptions,
 } from './utils/validation';
+
+// Headless JSON Utilities
+export {
+  parseDocumentJSON,
+  validateDocumentJSON,
+  formatDocumentJSON,
+  type ParseJSONResult,
+  type FormatDocumentOptions,
+} from './json';
+
+// AI Context Generator
+export {
+  generateDocumentAIContext,
+  type GenerateAIContextOptions,
+} from './ai-context';
+
 
 // Events
 export { EventEmitter } from './events';

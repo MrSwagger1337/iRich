@@ -14,6 +14,12 @@ import type {
 } from '@irich/core';
 
 /**
+ * Direction for the editor application chrome (toolbars, inspector, sidebars).
+ * Strictly 'ltr' or 'rtl' (never 'auto').
+ */
+export type IRichUIDirection = 'ltr' | 'rtl';
+
+/**
  * Props for the root <IRichProvider /> component.
  */
 export interface IRichProviderProps {
@@ -31,6 +37,16 @@ export interface IRichProviderProps {
    * Configuration options if creating an internal editor.
    */
   config?: EditorConfig;
+
+  /**
+   * Active direction for the editor UI chrome (default: 'ltr').
+   */
+  uiDirection?: IRichUIDirection;
+
+  /**
+   * Callback fired whenever the editor UI chrome direction changes.
+   */
+  onUIDirectionChange?: (dir: IRichUIDirection) => void;
 
   /**
    * Callback fired whenever the canonical document is updated.
@@ -64,6 +80,23 @@ export interface IRichProviderProps {
  */
 export interface IRichContextValue {
   editor: EditorInstance;
+  uiDirection: IRichUIDirection;
+  setUIDirection: (dir: IRichUIDirection) => void;
+}
+
+/**
+ * Return type for useIRichUIDirection().
+ */
+export interface UseIRichUIDirectionResult {
+  /**
+   * Active text/layout direction for the editor UI chrome ('ltr' | 'rtl').
+   */
+  readonly uiDirection: IRichUIDirection;
+
+  /**
+   * Sets the active UI direction.
+   */
+  readonly setUIDirection: (dir: IRichUIDirection) => void;
 }
 
 /**
@@ -137,7 +170,8 @@ export interface UseIRichHistoryResult {
 export interface UseIRichResult
   extends UseIRichSelectionResult,
     UseIRichHistoryResult,
-    UseIRichBreakpointResult {
+    UseIRichBreakpointResult,
+    UseIRichUIDirectionResult {
   /**
    * The underlying EditorInstance.
    */

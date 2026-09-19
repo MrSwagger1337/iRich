@@ -144,15 +144,30 @@ export function createPlaygroundSampleDocument(): IRichDocument {
                       content: [
                         {
                           type: 'listItem',
-                          content: [{ type: 'text', text: 'Strictly JSON-serializable ProseMirror AST' }],
+                          content: [
+                            {
+                              type: 'paragraph',
+                              content: [{ type: 'text', text: 'Strictly JSON-serializable ProseMirror AST' }],
+                            },
+                          ],
                         },
                         {
                           type: 'listItem',
-                          content: [{ type: 'text', text: 'Lightweight SSR-safe production renderer' }],
+                          content: [
+                            {
+                              type: 'paragraph',
+                              content: [{ type: 'text', text: 'Lightweight SSR-safe production renderer' }],
+                            },
+                          ],
                         },
                         {
                           type: 'listItem',
-                          content: [{ type: 'text', text: 'Decoupled controller and extensible marks' }],
+                          content: [
+                            {
+                              type: 'paragraph',
+                              content: [{ type: 'text', text: 'Decoupled controller and extensible marks' }],
+                            },
+                          ],
                         },
                       ],
                     },

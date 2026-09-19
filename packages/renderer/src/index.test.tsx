@@ -477,4 +477,236 @@ describe('@irich/renderer', () => {
       expect(html).toContain('id="card-3"');
     });
   });
+
+  describe('Multilingual, RTL/LTR & Bidi Direction Handling', () => {
+    it('renders dir="rtl" and lang="ar" when document metadata is configured', () => {
+      const doc: IRichDocument = {
+        version: '1.0.0',
+        metadata: {
+          locale: 'ar',
+          direction: 'rtl',
+        },
+        root: {
+          id: 'root',
+          type: 'root',
+          props: {},
+          children: [
+            {
+              id: 'text-1',
+              type: 'Text',
+              props: { content: 'مرحبا بكم في منصة التحرير' },
+            },
+          ],
+        },
+      };
+
+      const components = {
+        Text: ({ node, id, dir, lang }: NodeRendererProps<{ content?: string }>) => (
+          <p id={id} dir={dir} lang={lang}>
+            {String(node.props.content)}
+          </p>
+        ),
+      };
+
+      const html = renderToString(<IRichRenderer document={doc} components={components} />);
+
+      expect(html).toContain('dir="rtl"');
+      expect(html).toContain('lang="ar"');
+      expect(html).toContain('data-irich-renderer-root=""');
+      expect(html).toContain('مرحبا بكم في منصة التحرير');
+    });
+
+    it('does NOT emit dir or lang attributes when unresolved (natural host inheritance)', () => {
+      const doc: IRichDocument = {
+        version: '1.0.0',
+        root: {
+          id: 'root',
+          type: 'root',
+          props: {},
+          children: [
+            {
+              id: 'text-1',
+              type: 'Text',
+              props: { content: 'Host inherited text' },
+            },
+          ],
+        },
+      };
+
+      const components = {
+        Text: ({ id, node }: NodeRendererProps<{ content?: string }>) => (
+          <p id={id}>{String(node.props.content)}</p>
+        ),
+      };
+
+      const html = renderToString(<IRichRenderer document={doc} components={components} />);
+
+      expect(html).not.toContain('dir=');
+      expect(html).not.toContain('lang=');
+      expect(html).toContain('Host inherited text');
+    });
+
+    it('honors explicit renderer props over document metadata (Precedence: explicit > doc.metadata)', () => {
+      const doc: IRichDocument = {
+        version: '1.0.0',
+        metadata: {
+          locale: 'en',
+          direction: 'ltr',
+        },
+        root: {
+          id: 'root',
+          type: 'root',
+          props: {},
+          children: [
+            {
+              id: 'text-1',
+              type: 'Text',
+              props: { content: 'Overridden direction' },
+            },
+          ],
+        },
+      };
+
+      const components = {
+        Text: ({ id, node }: NodeRendererProps<{ content?: string }>) => (
+          <p id={id}>{String(node.props.content)}</p>
+        ),
+      };
+
+      const html = renderToString(
+        <IRichRenderer
+          document={doc}
+          components={components}
+          direction="rtl"
+          lang="ar"
+        />,
+      );
+
+      expect(html).toContain('dir="rtl"');
+      expect(html).toContain('lang="ar"');
+    });
+
+    it('supports dir="auto" for platform bidi handling', () => {
+      const doc: IRichDocument = {
+        version: '1.0.0',
+        metadata: {
+          direction: 'auto',
+        },
+        root: {
+          id: 'root',
+          type: 'root',
+          props: {},
+          children: [
+            {
+              id: 'text-1',
+              type: 'Text',
+              props: { content: 'Auto direction text' },
+            },
+          ],
+        },
+      };
+
+      const components = {
+        Text: ({ id, node }: NodeRendererProps<{ content?: string }>) => (
+          <p id={id}>{String(node.props.content)}</p>
+        ),
+      };
+
+      const html = renderToString(<IRichRenderer document={doc} components={components} />);
+
+      expect(html).toContain('dir="auto"');
+    });
+
+    it('passes node.meta.dir and node.meta.lang to Component renderers as NodeRendererProps', () => {
+      const doc: IRichDocument = {
+        version: '1.0.0',
+        metadata: {
+          locale: 'ar',
+          direction: 'rtl',
+        },
+        root: {
+          id: 'root',
+          type: 'root',
+          props: {},
+          children: [
+            {
+              id: 'heading-ar',
+              type: 'Heading',
+              props: { text: 'عنوان المقال' },
+            },
+            {
+              id: 'quote-en',
+              type: 'Quote',
+              meta: {
+                dir: 'ltr',
+                lang: 'en',
+              },
+              props: { text: 'Simplicity is prerequisite for reliability.' },
+            },
+          ],
+        },
+      };
+
+      const components = {
+        Heading: ({ id, node, dir, lang }: NodeRendererProps<{ text?: string }>) => (
+          <h1 id={id} dir={dir} lang={lang} data-testid="heading">
+            {String(node.props.text)}
+          </h1>
+        ),
+        Quote: ({ id, node, dir, lang }: NodeRendererProps<{ text?: string }>) => (
+          <blockquote id={id} dir={dir} lang={lang} data-testid="quote">
+            {String(node.props.text)}
+          </blockquote>
+        ),
+      };
+
+      const html = renderToString(<IRichRenderer document={doc} components={components} />);
+
+      // Document root has Arabic/RTL
+      expect(html).toContain('data-irich-renderer-root=""');
+      expect(html).toContain('dir="rtl"');
+      expect(html).toContain('lang="ar"');
+
+      // Heading has undefined node-level override (inherits from root naturally)
+      expect(html).toContain('عنوان المقال');
+
+      // Quote has explicit node-level override
+      expect(html).toContain('<blockquote id="quote-en" dir="ltr" lang="en"');
+      expect(html).toContain('Simplicity is prerequisite for reliability.');
+    });
+
+    it('handles helper renderDocument with direction and lang options', () => {
+      const doc: IRichDocument = {
+        version: '1.0.0',
+        root: {
+          id: 'root',
+          type: 'root',
+          props: {},
+          children: [
+            {
+              id: 'text-1',
+              type: 'Text',
+              props: { content: 'Functional render helper' },
+            },
+          ],
+        },
+      };
+
+      const element = renderDocument(
+        doc,
+        {
+          Text: ({ id, node }: NodeRendererProps<{ content?: string }>) => (
+            <span id={id}>{String(node.props.content)}</span>
+          ),
+        },
+        { direction: 'rtl', lang: 'ar' },
+      );
+
+      const html = renderToString(element!);
+      expect(html).toContain('dir="rtl"');
+      expect(html).toContain('lang="ar"');
+      expect(html).toContain('Functional render helper');
+    });
+  });
 });
+

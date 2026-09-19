@@ -67,7 +67,11 @@ export const RenderNode: React.FC<RenderNodeProps> = ({
   // 3. Resolve responsive props for active breakpoint
   const resolvedProps = resolveNodeProps(node.props, breakpoint);
 
-  // 4. Special handling for root container if not explicitly mapped
+  // 4. Resolve node metadata direction and language overrides
+  const nodeDir = node.meta?.dir;
+  const nodeLang = node.meta?.lang;
+
+  // 5. Special handling for root container if not explicitly mapped
   if (node.type === 'root') {
     const RootComponent = components[node.type];
     if (RootComponent) {
@@ -76,17 +80,27 @@ export const RenderNode: React.FC<RenderNodeProps> = ({
           {...resolvedProps}
           node={node}
           id={node.id}
+          dir={nodeDir}
+          lang={nodeLang}
           children={renderedChildren}
           slots={renderedSlots}
         />
       );
     }
 
-    // Default root pass-through
+    // Default root pass-through (or container with dir/lang if specified on root node meta)
+    if (nodeDir !== undefined || nodeLang !== undefined) {
+      return (
+        <div dir={nodeDir} lang={nodeLang} data-irich-root-meta="">
+          {renderedChildren}
+        </div>
+      );
+    }
+
     return <React.Fragment>{renderedChildren}</React.Fragment>;
   }
 
-  // 5. Resolve registered component
+  // 6. Resolve registered component
   const Component = components[node.type];
 
   if (Component) {
@@ -96,6 +110,8 @@ export const RenderNode: React.FC<RenderNodeProps> = ({
           {...resolvedProps}
           node={node}
           id={node.id}
+          dir={nodeDir}
+          lang={nodeLang}
           children={renderedChildren}
           slots={renderedSlots}
         />

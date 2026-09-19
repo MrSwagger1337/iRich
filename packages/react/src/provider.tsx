@@ -25,6 +25,8 @@ export const IRichProvider: React.FC<IRichProviderProps> = ({
   editor: externalEditor,
   initialDocument,
   config,
+  uiDirection: propUIDirection = 'ltr',
+  onUIDirectionChange,
   onChange,
   onSelectionChange,
   onBreakpointChange,
@@ -40,6 +42,21 @@ export const IRichProvider: React.FC<IRichProviderProps> = ({
 
   const onBreakpointChangeRef = useRef(onBreakpointChange);
   onBreakpointChangeRef.current = onBreakpointChange;
+
+  const onUIDirectionChangeRef = useRef(onUIDirectionChange);
+  onUIDirectionChangeRef.current = onUIDirectionChange;
+
+  // Manage UI chrome direction state
+  const [uiDirection, setUIDirectionState] = useState(propUIDirection);
+
+  useEffect(() => {
+    setUIDirectionState(propUIDirection);
+  }, [propUIDirection]);
+
+  const setUIDirection = React.useCallback((dir: typeof propUIDirection) => {
+    setUIDirectionState(dir);
+    onUIDirectionChangeRef.current?.(dir);
+  }, []);
 
   // Track whether the editor instance was internally created
   const isInternalEditorRef = useRef(false);
@@ -91,8 +108,10 @@ export const IRichProvider: React.FC<IRichProviderProps> = ({
   const contextValue = useMemo<IRichContextValue>(
     () => ({
       editor: activeEditor,
+      uiDirection,
+      setUIDirection,
     }),
-    [activeEditor],
+    [activeEditor, uiDirection, setUIDirection],
   );
 
   return (

@@ -66,7 +66,9 @@ body {
 .irich-main-workspace {
   display: grid;
   grid-template-columns: 280px 1fr 320px;
+  grid-template-rows: 100%;
   height: calc(100vh - 54px);
+  max-height: calc(100vh - 54px);
   overflow: hidden;
 }
 
@@ -781,7 +783,9 @@ body {
    Central Canvas Area
    ========================================================================== */
 .irich-canvas-viewport {
-  flex: 1;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
   background-color: var(--bg-app);
   background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
   background-size: 20px 20px;
@@ -790,11 +794,12 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 20px;
+  padding: 30px 20px 60px 20px;
   position: relative;
 }
 
 .irich-canvas-device-bar {
+  flex-shrink: 0;
   margin-bottom: 16px;
   background: var(--bg-sidebar);
   border: 1px solid var(--border-subtle);
@@ -808,6 +813,8 @@ body {
 
 .irich-canvas-frame {
   max-width: 100%;
+  flex-shrink: 0;
+  margin-bottom: 40px;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
@@ -828,6 +835,9 @@ body {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -1299,7 +1309,8 @@ body {
 .irich-rich-ordered-list,
 .ProseMirror ul,
 .ProseMirror ol {
-  padding-left: 1.5rem;
+  padding-inline-start: 1.5rem;
+  padding-inline-end: 0;
   margin: 0.5rem 0 1rem 0;
 }
 
@@ -1320,13 +1331,16 @@ body {
 
 .irich-rich-blockquote,
 .ProseMirror blockquote {
-  border-left: 3px solid var(--primary);
-  padding-left: 1rem;
-  margin: 1rem 0;
+  border-inline-start: 3px solid var(--primary);
+  padding-inline-start: 1rem;
+  padding-inline-end: 0.5rem;
+  margin-block: 1rem;
+  margin-inline: 0;
   color: var(--text-muted);
   font-style: italic;
   background: rgba(255, 255, 255, 0.02);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-start-end-radius: var(--radius-sm);
+  border-end-end-radius: var(--radius-sm);
 }
 
 .irich-rich-code-block,
@@ -1508,9 +1522,10 @@ body {
 }
 
 /* ==========================================================================
-   Modal (JSON Inspection)
+   Modal (JSON Inspection & Document JSON Studio)
    ========================================================================== */
-.irich-modal-backdrop {
+.irich-modal-backdrop,
+.irich-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.75);
@@ -1533,6 +1548,224 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.irich-json-studio-modal-card {
+  max-width: 920px;
+  max-height: 90vh;
+  padding: 1.5rem;
+}
+
+.irich-json-studio {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  gap: 0.75rem;
+}
+
+.irich-json-studio-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.irich-json-studio-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.irich-json-studio-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.irich-json-studio-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.irich-json-studio-status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+
+.irich-json-studio-subtitle {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.irich-json-studio-close-btn {
+  font-size: 1rem;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.irich-json-studio-feedback-bar {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+  font-size: 0.8125rem;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.irich-json-studio-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.irich-json-studio-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.irich-json-studio-editor-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 260px;
+  max-height: 48vh;
+}
+
+.irich-json-studio-textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  background: #060911;
+  color: #e2e8f0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 0.875rem;
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  resize: vertical;
+  direction: ltr !important;
+  text-align: left !important;
+  box-sizing: border-box;
+}
+.irich-json-studio-textarea:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.25);
+}
+.irich-json-studio-textarea[aria-invalid="true"] {
+  border-color: #ef4444;
+}
+
+.irich-json-studio-diagnostics {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.irich-json-diagnostics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.irich-json-diagnostics-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #f87171;
+  font-size: 0.8125rem;
+}
+
+.irich-json-diagnostics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.irich-json-diagnostic-card {
+  background: #0b0f19;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.irich-json-diagnostic-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.irich-json-diagnostic-code {
+  font-weight: 700;
+  color: #f87171;
+  font-family: monospace;
+}
+
+.irich-json-diagnostic-path,
+.irich-json-diagnostic-meta {
+  color: #94a3b8;
+}
+
+.irich-json-diagnostic-message {
+  color: #fca5a5;
+}
+
+.irich-json-studio-success-banner {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+}
+
+.irich-discard-card {
+  max-width: 420px;
+  padding: 1.25rem;
+  gap: 0.75rem;
+}
+
+.irich-btn-danger {
+  background: #dc2626;
+  color: white;
+  border: none;
+}
+.irich-btn-danger:hover {
+  background: #b91c1c;
 }
 
 .irich-modal-header {
@@ -1594,3 +1827,4 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-subtle);
 }
+

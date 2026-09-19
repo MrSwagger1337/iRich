@@ -2,7 +2,6 @@
 
 import React, { useMemo } from 'react';
 import {
-  IRichDndProvider,
   IRichProvider,
   useIRichBreakpoint,
 } from '@irich/react';
@@ -42,9 +41,8 @@ export default function PlaygroundPage() {
 
   return (
     <IRichProvider initialDocument={initialDocument} config={{ registry }}>
-      <IRichDndProvider>
-        <PlaygroundWorkspace />
-      </IRichDndProvider>
+      <PlaygroundWorkspace />
     </IRichProvider>
   );
 }
+

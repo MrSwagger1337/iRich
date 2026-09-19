@@ -1,51 +1,26 @@
-'use client';
-
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { IRichRenderer } from '@irich/renderer';
-import type { IRichDocument } from '@irich/core';
 import { nextjsRenderers } from './components/renderers';
 import { initialNextjsDocument } from './components/sample-document';
+import { initialArabicDocument } from './components/sample-document-arabic';
 
-const STORAGE_KEY = 'irich_nextjs_demo_doc';
-
-export default function PublishedPage() {
-  const [documentState, setDocumentState] = useState<IRichDocument>(initialNextjsDocument);
-  const [showJsonDrawer, setShowJsonDrawer] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  // Load latest saved document from localStorage if available
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.root && parsed.version) {
-          setDocumentState(parsed);
-        }
-      }
-    } catch {
-      // fallback to initial sample
-    }
-  }, []);
-
-  const handleResetDocument = () => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-    setDocumentState(initialNextjsDocument);
-  };
-
-  const handleCopyJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(documentState, null, 2));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+/**
+ * Genuine Next.js React Server Component (RSC).
+ * Demonstrates production rendering of canonical JSON documents with @irich/renderer
+ * on the server with zero visual editor dependencies in the client bundle.
+ */
+export default async function PublishedPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ fixture?: string }>;
+}) {
+  const resolvedParams = await searchParams;
+  const isArabic = resolvedParams?.fixture === 'arabic';
+  const document = isArabic ? initialArabicDocument : initialNextjsDocument;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="irich-published-shell">
       {/* 1. TOP NAVBAR */}
       <header className="irich-navbar">
         <div className="irich-nav-left">
@@ -54,124 +29,59 @@ export default function PublishedPage() {
             <span>iRich</span>
           </div>
           <span className="irich-badge-tag">
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-            Live Published View (SSR)
+            <span className="irich-status-dot" style={{ background: '#10b981' }} />
+            Server Component (SSR)
           </span>
+          <div className="irich-viewport-controls" style={{ marginLeft: '1rem' }}>
+            <Link
+              href="/"
+              className={`irich-viewport-btn ${!isArabic ? 'active' : ''}`}
+            >
+              🇬🇧 English LTR
+            </Link>
+            <Link
+              href="/?fixture=arabic"
+              className={`irich-viewport-btn ${isArabic ? 'active' : ''}`}
+            >
+              🇸🇦 Arabic RTL
+            </Link>
+          </div>
         </div>
 
         <div className="irich-nav-right">
-          <button
-            onClick={() => setShowJsonDrawer(true)}
-            className="irich-btn irich-btn-secondary irich-btn-sm"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ marginRight: '6px' }}
-            >
-              <polyline points="16 18 22 12 16 6" />
-              <polyline points="8 6 2 12 8 18" />
-            </svg>
-            View JSON State
-          </button>
-
-          <button
-            onClick={handleResetDocument}
-            className="irich-btn irich-btn-ghost irich-btn-sm"
-            title="Reset document to default sample"
-          >
-            Reset Sample
-          </button>
-
           <Link href="/editor" className="irich-btn irich-btn-primary irich-btn-sm">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ marginRight: '6px' }}
-            >
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-            Open Visual Editor
+            Open Visual Editor →
           </Link>
         </div>
       </header>
 
-      {/* 2. SSR-COMPATIBLE PRODUCTION RENDERER */}
-      <main style={{ flex: 1 }}>
+      {/* 2. SSR INFO BANNER */}
+      <div className="irich-ssr-notice">
+        <p>
+          <strong>Server-Side Rendered Page</strong> • Rendered from canonical JSON using{' '}
+          <code>@irich/renderer</code>. Zero editor dependencies loaded. Open the{' '}
+          <Link href="/editor" style={{ textDecoration: 'underline', color: '#818cf8' }}>
+            Visual Editor
+          </Link>{' '}
+          to edit and customize this layout.
+        </p>
+      </div>
+
+      {/* 3. SERVER-SIDE PRODUCTION RENDERER */}
+      <main className="irich-published-main">
         <IRichRenderer
-          document={documentState}
+          document={document}
           components={nextjsRenderers}
         />
       </main>
 
-      {/* 3. FOOTER */}
-      <footer
-        style={{
-          borderTop: '1px solid var(--border-subtle)',
-          padding: '2rem 1.5rem',
-          textAlign: 'center',
-          color: 'var(--text-muted)',
-          fontSize: '0.875rem',
-        }}
-      >
+      {/* 4. FOOTER */}
+      <footer className="irich-published-footer">
         <p>
-          Rendered with <strong>@irich/renderer</strong> in Next.js • Zero visual editor code loaded on published page.
+          Rendered with <strong>@irich/renderer</strong> in Next.js App Router • Production bundle size &lt; 5 KB gzipped.
         </p>
       </footer>
-
-      {/* 4. JSON DRAWER MODAL */}
-      {showJsonDrawer && (
-        <div className="irich-drawer-overlay" onClick={() => setShowJsonDrawer(false)}>
-          <div className="irich-drawer-content" onClick={(e) => e.stopPropagation()}>
-            <div className="irich-drawer-header">
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Canonical Document JSON</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                  Strictly serializable JSON state rendered by @irich/renderer
-                </p>
-              </div>
-              <button
-                onClick={() => setShowJsonDrawer(false)}
-                className="irich-btn irich-btn-ghost irich-btn-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <pre className="irich-json-pre">
-              {JSON.stringify(documentState, null, 2)}
-            </pre>
-
-            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-              <button
-                onClick={handleCopyJson}
-                className="irich-btn irich-btn-secondary irich-btn-md"
-              >
-                {copied ? '✓ Copied JSON' : 'Copy JSON to Clipboard'}
-              </button>
-              <Link
-                href="/editor"
-                className="irich-btn irich-btn-primary irich-btn-md"
-              >
-                Edit in Visual Editor
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+

@@ -169,18 +169,42 @@ registry.unregister('Hero');
 In application and presentation layers, React renderers map directly to core component types:
 
 ```typescript
-import { RendererRegistry } from '@irich/renderer';
+import { RendererRegistry, type NodeRendererProps } from '@irich/renderer';
 import { HeroComponent } from './components/Hero';
 
 const renderer = new RendererRegistry();
 
-renderer.register('Hero', ({ title, subtitle, alignment, backgroundColor, slots }) => {
+renderer.register('Hero', ({ props, dir, lang, slots }: NodeRendererProps) => {
   return (
-    <section style={{ backgroundColor, textAlign: alignment, padding: '4rem 2rem' }}>
-      <h1>{title}</h1>
-      <p>{subtitle}</p>
+    <section
+      dir={dir}
+      lang={lang}
+      style={{
+        backgroundColor: props.backgroundColor as string,
+        textAlign: props.alignment === 'left' ? 'start' : props.alignment === 'right' ? 'end' : 'center',
+        padding: '4rem 2rem',
+      }}
+    >
+      <h1>{props.title as string}</h1>
+      <p>{props.subtitle as string}</p>
       {slots?.actions}
     </section>
   );
 });
 ```
+
+---
+
+## 6. Multilingual Rendering & CSS Logical Properties
+
+When implementing component renderers:
+
+1. **Accept `dir` and `lang` from `NodeRendererProps`**: Forward `dir` and `lang` to the semantic root container element (e.g. `<section dir={dir} lang={lang}>` or `<blockquote dir={dir} lang={lang}>`).
+2. **Use CSS Logical Properties**: Always use logical properties instead of physical left/right rules:
+   - Use `margin-inline-start` / `margin-inline-end` instead of `margin-left` / `margin-right`
+   - Use `padding-inline-start` / `padding-inline-end` instead of `padding-left` / `padding-right`
+   - Use `border-inline-start` / `border-inline-end` instead of `border-left` / `border-right`
+   - Use `inset-inline-start` / `inset-inline-end` instead of `left` / `right`
+   - Use `text-align: start` / `text-align: end` instead of `text-align: left` / `text-align: right`
+3. **Avoid Synthetic Wrappers**: Do not wrap components in synthetic `<div style={{ display: 'contents' }}>` tags, which can interfere with screen readers, drag-and-drop measurements, and selection overlays.
+

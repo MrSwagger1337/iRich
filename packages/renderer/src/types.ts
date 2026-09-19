@@ -4,7 +4,7 @@
  */
 
 import type React from 'react';
-import type { Breakpoint, IRichDocument, IRichNode, NodeId } from '@irich/core';
+import type { Breakpoint, IRichDirection, IRichDocument, IRichNode, NodeId } from '@irich/core';
 import type { RendererRegistry } from './registry';
 
 /**
@@ -20,6 +20,16 @@ export type NodeRendererProps<Props = Record<string, unknown>> = Props & {
    * Unique ID of the node.
    */
   readonly id: NodeId;
+
+  /**
+   * Resolved text and layout direction for the node (from node.meta?.dir).
+   */
+  readonly dir?: IRichDirection;
+
+  /**
+   * Resolved language tag for the node (from node.meta?.lang).
+   */
+  readonly lang?: string;
 
   /**
    * Rendered child components for default children array.
@@ -86,6 +96,18 @@ export interface IRichRendererProps {
   readonly breakpoint?: Breakpoint;
 
   /**
+   * Explicit direction override for document root ('ltr' | 'rtl' | 'auto').
+   * Precedence: explicit prop > document.metadata.direction > natural host inheritance.
+   */
+  readonly direction?: IRichDirection;
+
+  /**
+   * Explicit language/locale override for document root (e.g. 'ar', 'en').
+   * Precedence: explicit prop > document.metadata.locale > natural host inheritance.
+   */
+  readonly lang?: string;
+
+  /**
    * Custom fallback component rendered when encountering an unregistered component type.
    */
   readonly fallback?: React.ComponentType<UnknownComponentProps>;
@@ -128,6 +150,8 @@ export interface RenderNodeProps {
  */
 export interface RenderOptions {
   readonly breakpoint?: Breakpoint;
+  readonly direction?: IRichDirection;
+  readonly lang?: string;
   readonly fallback?: React.ComponentType<UnknownComponentProps>;
   readonly onUnknownComponent?: UnknownComponentBehavior;
   readonly onError?: (error: Error, node: IRichNode) => void;

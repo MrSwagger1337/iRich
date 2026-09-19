@@ -19,6 +19,7 @@ import {
   useIRichHistory,
   useIRichNode,
   useIRichSelection,
+  useIRichUIDirection,
 } from './index';
 
 // Configure React act() environment
@@ -689,4 +690,122 @@ describe('@irich/react', () => {
       expect(html).toContain('SSR Page Title');
     });
   });
+
+  describe('UI Direction vs Document Direction Independence', () => {
+    it('defaults uiDirection to "ltr" and allows reading and updating via useIRichUIDirection', () => {
+      let currentUIDir = '';
+      let updateUIDir: (dir: 'ltr' | 'rtl') => void = () => {};
+
+      function DirectionConsumer() {
+        const { uiDirection, setUIDirection } = useIRichUIDirection();
+        currentUIDir = uiDirection;
+        updateUIDir = setUIDirection;
+        return <div data-testid="ui-dir">{uiDirection}</div>;
+      }
+
+      const onUIDirectionChange = vi.fn();
+
+      act(() => {
+        root?.render(
+          <IRichProvider onUIDirectionChange={onUIDirectionChange}>
+            <DirectionConsumer />
+          </IRichProvider>,
+        );
+      });
+
+      expect(currentUIDir).toBe('ltr');
+      expect(container?.textContent).toBe('ltr');
+
+      act(() => {
+        updateUIDir('rtl');
+      });
+
+      expect(currentUIDir).toBe('rtl');
+      expect(container?.textContent).toBe('rtl');
+      expect(onUIDirectionChange).toHaveBeenCalledWith('rtl');
+    });
+
+    it('initializes uiDirection from IRichProvider props', () => {
+      function DirectionConsumer() {
+        const { uiDirection } = useIRichUIDirection();
+        return <div data-testid="ui-dir">{uiDirection}</div>;
+      }
+
+      act(() => {
+        root?.render(
+          <IRichProvider uiDirection="rtl">
+            <DirectionConsumer />
+          </IRichProvider>,
+        );
+      });
+
+      expect(container?.textContent).toBe('rtl');
+    });
+
+    it('keeps UI direction strictly independent of document metadata direction', () => {
+      const arabicDoc = createDocument({
+        metadata: {
+          locale: 'ar',
+          direction: 'rtl',
+        },
+        root: createNode({
+          id: 'root',
+          type: 'Page',
+          children: [],
+        }),
+      });
+
+      const englishDoc = createDocument({
+        metadata: {
+          locale: 'en',
+          direction: 'ltr',
+        },
+        root: createNode({
+          id: 'root',
+          type: 'Page',
+          children: [],
+        }),
+      });
+
+      const editor = new Editor({ initialDocument: arabicDoc });
+
+      let capturedUIDirection = '';
+      let capturedDocDirection = '';
+
+      function DualDirectionView() {
+        const { uiDirection } = useIRichUIDirection();
+        const doc = useIRichDocument();
+        capturedUIDirection = uiDirection;
+        capturedDocDirection = doc.metadata?.direction ?? '';
+        return (
+          <div>
+            <span data-testid="ui">{uiDirection}</span>
+            <span data-testid="doc">{doc.metadata?.direction}</span>
+          </div>
+        );
+      }
+
+      act(() => {
+        root?.render(
+          <IRichProvider editor={editor} uiDirection="ltr">
+            <DualDirectionView />
+          </IRichProvider>,
+        );
+      });
+
+      // UI is LTR while Document is RTL
+      expect(capturedUIDirection).toBe('ltr');
+      expect(capturedDocDirection).toBe('rtl');
+
+      // Replace document with an English/LTR document
+      act(() => {
+        editor.commands.replaceDocument(englishDoc);
+      });
+
+      // Document direction updated to LTR, UI direction remains untouched as LTR
+      expect(capturedUIDirection).toBe('ltr');
+      expect(capturedDocDirection).toBe('ltr');
+    });
+  });
 });
+

@@ -1,121 +1,19 @@
 /**
- * React Component Renderers for iRich Playground with interactive canvas selection and DnD reordering.
+ * React Component Renderers for iRich Playground.
  */
 
 'use client';
 
-import React, { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
-import { findParent, type JSONValue } from '@irich/core';
+import React, { useEffect, useState } from 'react';
+import type { JSONValue } from '@irich/core';
 import type { ComponentMap, NodeRendererProps } from '@irich/renderer';
 import {
   IRichTextEditor,
   IRichTextRenderer,
-  InsertionIndicator,
-  useIRichCanvasDraggable,
-  useIRichDndState,
-  useIRichDocument,
-  useIRichDroppableContainer,
   useIRichEditor,
-  useIRichNodeDropTarget,
   useIRichSelection,
   type RichTextDocument,
 } from '@irich/react';
-
-/**
- * Interactive canvas node wrapper providing click-to-select, drag handle, hover outlines,
- * selection badges, and top/bottom insertion drop targets.
- */
-interface NodeWrapperProps {
-  id: string;
-  type: string;
-  children: ReactNode;
-  style?: CSSProperties;
-  className?: string;
-}
-
-export function NodeWrapper({ id, type, children, style, className }: NodeWrapperProps) {
-  const { selectedNodeId, selectNode } = useIRichSelection();
-  const document = useIRichDocument();
-  const dndState = useIRichDndState();
-  const isSelected = selectedNodeId === id;
-
-  const parentLoc = useMemo(() => findParent(document, id), [document, id]);
-  const parentId = parentLoc?.parent.id ?? 'root';
-  const index = parentLoc?.index ?? 0;
-  const slot = parentLoc?.slotName;
-
-  const { setNodeRef: setDragRef, attributes, listeners, isDragging } = useIRichCanvasDraggable({
-    nodeId: id,
-    componentType: type,
-    parentId,
-    index,
-    slot,
-  });
-
-  const { setNodeRef: setTopDropRef, isOver: isTopOver } = useIRichNodeDropTarget({
-    nodeId: id,
-    parentId,
-    index,
-    slot,
-    edge: 'top',
-  });
-
-  const { setNodeRef: setBottomDropRef, isOver: isBottomOver } = useIRichNodeDropTarget({
-    nodeId: id,
-    parentId,
-    index,
-    slot,
-    edge: 'bottom',
-  });
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    selectNode(id);
-  };
-
-  return (
-    <div
-      ref={setDragRef}
-      data-irich-node-id={id}
-      data-irich-node-type={type}
-      data-irich-selected={isSelected ? 'true' : 'false'}
-      className={`irich-canvas-node ${isSelected ? 'irich-canvas-node-selected' : ''} ${
-        isDragging ? 'irich-canvas-node-dragging' : ''
-      } ${className ?? ''}`}
-      style={{
-        ...style,
-        opacity: isDragging ? 0.35 : 1,
-      }}
-      onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.stopPropagation();
-          selectNode(id);
-        }
-      }}
-    >
-      {/* Top Drop Edge Target & Indicator */}
-      <div ref={setTopDropRef} className="irich-node-edge-target irich-node-edge-top">
-        <InsertionIndicator edge="top" visible={isTopOver} allowed={dndState.isAllowed} />
-      </div>
-
-      {/* Node selection badge & drag handle */}
-      <div className="irich-node-badge" {...attributes} {...listeners} title="Drag to move">
-        <span className="irich-node-badge-drag-icon">⋮⋮</span>
-        <span className="irich-node-badge-type">{type}</span>
-      </div>
-
-      {children}
-
-      {/* Bottom Drop Edge Target & Indicator */}
-      <div ref={setBottomDropRef} className="irich-node-edge-target irich-node-edge-bottom">
-        <InsertionIndicator edge="bottom" visible={isBottomOver} allowed={dndState.isAllowed} />
-      </div>
-    </div>
-  );
-}
 
 // 1. Container Renderer
 export const ContainerRenderer: React.FC<
@@ -125,11 +23,7 @@ export const ContainerRenderer: React.FC<
     background?: string;
     layout?: string;
   }>
-> = ({ node, padding, maxWidth, background, layout, children }) => {
-  const { setNodeRef, isOver } = useIRichDroppableContainer({
-    parentId: node.id,
-  });
-
+> = ({ padding, maxWidth, background, layout, children, dir, lang }) => {
   const paddingMap: Record<string, string> = {
     none: '0',
     small: '1rem',
@@ -146,15 +40,15 @@ export const ContainerRenderer: React.FC<
 
   const isGrid2 = layout === 'grid-2';
   const isGrid3 = layout === 'grid-3';
-  const hasChildren = node.children && node.children.length > 0;
 
   return (
-    <NodeWrapper id={node.id} type="Container" className="irich-container-node">
+    <div
+      className={`irich-container-node bg-${background ?? 'transparent'}`}
+      dir={dir}
+      lang={lang}
+    >
       <div
-        ref={setNodeRef}
-        className={`irich-container-inner bg-${background ?? 'transparent'} ${
-          isOver ? 'irich-container-droppable-active' : ''
-        }`}
+        className="irich-container-inner"
         style={{
           padding: paddingMap[padding ?? 'medium'] ?? '2rem',
           maxWidth: maxWidthMap[maxWidth ?? 'wide'] ?? '1200px',
@@ -172,16 +66,10 @@ export const ContainerRenderer: React.FC<
                 : 'irich-layout-vertical'
           }
         >
-          {hasChildren ? (
-            children
-          ) : (
-            <div className="irich-empty-container-dropzone">
-              <span>Drop components inside Container</span>
-            </div>
-          )}
+          {children}
         </div>
       </div>
-    </NodeWrapper>
+    </div>
   );
 };
 
@@ -192,19 +80,19 @@ export const HeadingRenderer: React.FC<
     level?: string;
     align?: 'left' | 'center' | 'right';
   }>
-> = ({ node, text, level, align }) => {
+> = ({ text, level, align, dir, lang }) => {
   const Tag = (level || 'h2') as 'h1' | 'h2' | 'h3' | 'h4';
   const alignment = align || 'left';
 
   return (
-    <NodeWrapper id={node.id} type="Heading">
-      <Tag
-        className={`irich-heading irich-heading-${Tag}`}
-        style={{ textAlign: alignment, margin: '0.5rem 0' }}
-      >
-        {text ?? 'Heading Text'}
-      </Tag>
-    </NodeWrapper>
+    <Tag
+      className={`irich-heading irich-heading-${Tag}`}
+      style={{ textAlign: alignment, margin: '0.5rem 0' }}
+      dir={dir}
+      lang={lang}
+    >
+      {text ?? 'Heading Text'}
+    </Tag>
   );
 };
 
@@ -216,20 +104,20 @@ export const TextRenderer: React.FC<
     color?: string;
     align?: 'left' | 'center' | 'right';
   }>
-> = ({ node, content, size, color, align }) => {
+> = ({ content, size, color, align, dir, lang }) => {
   return (
-    <NodeWrapper id={node.id} type="Text">
-      <p
-        className={`irich-text irich-text-${size ?? 'md'} irich-text-${color ?? 'primary'}`}
-        style={{
-          textAlign: align ?? 'left',
-          margin: '0.5rem 0 1rem 0',
-          lineHeight: 1.6,
-        }}
-      >
-        {content ?? 'Paragraph content...'}
-      </p>
-    </NodeWrapper>
+    <p
+      className={`irich-text irich-text-${size ?? 'md'} irich-text-${color ?? 'primary'}`}
+      style={{
+        textAlign: align ?? 'left',
+        margin: '0.5rem 0 1rem 0',
+        lineHeight: 1.6,
+      }}
+      dir={dir}
+      lang={lang}
+    >
+      {content ?? 'Paragraph content...'}
+    </p>
   );
 };
 
@@ -241,17 +129,17 @@ export const ButtonRenderer: React.FC<
     size?: string;
     url?: string;
   }>
-> = ({ node, label, variant, size }) => {
+> = ({ label, variant, size, dir, lang }) => {
   return (
-    <NodeWrapper id={node.id} type="Button" style={{ display: 'inline-block' }}>
-      <button
-        type="button"
-        className={`irich-btn irich-btn-${variant ?? 'primary'} irich-btn-${size ?? 'md'}`}
-        onClick={(e) => e.preventDefault()}
-      >
-        {label ?? 'Button'}
-      </button>
-    </NodeWrapper>
+    <button
+      type="button"
+      className={`irich-btn irich-btn-${variant ?? 'primary'} irich-btn-${size ?? 'md'}`}
+      onClick={(e) => e.preventDefault()}
+      dir={dir}
+      lang={lang}
+    >
+      {label ?? 'Button'}
+    </button>
   );
 };
 
@@ -263,25 +151,14 @@ export const CardRenderer: React.FC<
     tag?: string;
     variant?: string;
   }>
-> = ({ node, title, description, tag, variant, children }) => {
-  const { setNodeRef, isOver } = useIRichDroppableContainer({
-    parentId: node.id,
-  });
-
+> = ({ title, description, tag, variant, children, dir, lang }) => {
   return (
-    <NodeWrapper id={node.id} type="Card" className="irich-card-wrapper">
-      <div
-        ref={setNodeRef}
-        className={`irich-card irich-card-${variant ?? 'elevated'} ${
-          isOver ? 'irich-container-droppable-active' : ''
-        }`}
-      >
-        {tag && <div className="irich-card-tag">{tag}</div>}
-        <h3 className="irich-card-title">{title ?? 'Card Title'}</h3>
-        {description && <p className="irich-card-desc">{description}</p>}
-        {children && <div className="irich-card-body">{children}</div>}
-      </div>
-    </NodeWrapper>
+    <div className={`irich-card irich-card-${variant ?? 'elevated'}`} dir={dir} lang={lang}>
+      {tag && <div className="irich-card-tag">{tag}</div>}
+      <h3 className="irich-card-title">{title ?? 'Card Title'}</h3>
+      {description && <p className="irich-card-desc">{description}</p>}
+      {children && <div className="irich-card-body">{children}</div>}
+    </div>
   );
 };
 
@@ -296,38 +173,41 @@ export const HeroRenderer: React.FC<
     secondaryActionLabel?: string;
   }>
 > = ({
-  node,
   badge,
   title,
   subtitle,
   align,
   primaryActionLabel,
   secondaryActionLabel,
+  dir,
+  lang,
 }) => {
   const isCenter = align === 'center';
 
   return (
-    <NodeWrapper id={node.id} type="Hero" className="irich-hero-wrapper">
-      <header className={`irich-hero ${isCenter ? 'irich-hero-center' : 'irich-hero-left'}`}>
-        {badge && <div className="irich-hero-badge">{badge}</div>}
-        <h1 className="irich-hero-title">{title ?? 'Hero Title'}</h1>
-        {subtitle && <p className="irich-hero-subtitle">{subtitle}</p>}
-        {(primaryActionLabel || secondaryActionLabel) && (
-          <div className="irich-hero-actions">
-            {primaryActionLabel && (
-              <button type="button" className="irich-btn irich-btn-primary irich-btn-lg">
-                {primaryActionLabel}
-              </button>
-            )}
-            {secondaryActionLabel && (
-              <button type="button" className="irich-btn irich-btn-outline irich-btn-lg">
-                {secondaryActionLabel}
-              </button>
-            )}
-          </div>
-        )}
-      </header>
-    </NodeWrapper>
+    <header
+      className={`irich-hero ${isCenter ? 'irich-hero-center' : 'irich-hero-left'}`}
+      dir={dir}
+      lang={lang}
+    >
+      {badge && <div className="irich-hero-badge">{badge}</div>}
+      <h1 className="irich-hero-title">{title ?? 'Hero Title'}</h1>
+      {subtitle && <p className="irich-hero-subtitle">{subtitle}</p>}
+      {(primaryActionLabel || secondaryActionLabel) && (
+        <div className="irich-hero-actions">
+          {primaryActionLabel && (
+            <button type="button" className="irich-btn irich-btn-primary irich-btn-lg">
+              {primaryActionLabel}
+            </button>
+          )}
+          {secondaryActionLabel && (
+            <button type="button" className="irich-btn irich-btn-outline irich-btn-lg">
+              {secondaryActionLabel}
+            </button>
+          )}
+        </div>
+      )}
+    </header>
   );
 };
 
@@ -337,7 +217,7 @@ export const RichTextRenderer: React.FC<
     content?: RichTextDocument | string;
     placeholder?: string;
   }>
-> = ({ node, content, placeholder }) => {
+> = ({ node, content, placeholder, dir, lang }) => {
   const editor = useIRichEditor();
   const { selectedNodeId } = useIRichSelection();
   const isSelected = selectedNodeId === node.id;
@@ -365,76 +245,55 @@ export const RichTextRenderer: React.FC<
   };
 
   return (
-    <NodeWrapper id={node.id} type="RichText" className="irich-richtext-wrapper">
-      <div
-        className={`irich-richtext-container ${isEditing ? 'editing' : 'view'}`}
-        onDoubleClick={handleDoubleClick}
-      >
-        {isEditing ? (
-          <div className="irich-richtext-editor-active">
-            <IRichTextEditor
-              content={content}
-              onChange={handleContentChange}
-              placeholder={placeholder ?? 'Start typing rich text...'}
-              editable={true}
-              showFloatingToolbar={true}
-              autoFocus={true}
-            />
-            <div className="irich-richtext-editing-hint">
-              <span>Editing Rich Text • Click outside or press Done to finish</span>
+    <div
+      className={`irich-richtext-container ${isEditing ? 'editing' : 'view'}`}
+      onDoubleClick={handleDoubleClick}
+      dir={dir}
+      lang={lang}
+    >
+      {isEditing ? (
+        <div className="irich-richtext-editor-active">
+          <IRichTextEditor
+            content={content}
+            dir={dir}
+            lang={lang}
+            onChange={handleContentChange}
+            placeholder={placeholder ?? 'Start typing rich text...'}
+            editable={true}
+            showFloatingToolbar={true}
+            autoFocus={true}
+          />
+          <div className="irich-richtext-editing-hint">
+            <span>Editing Rich Text • Click outside or press Done to finish</span>
+            <button
+              type="button"
+              className="irich-richtext-done-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(false);
+              }}
+            >
+              ✓ Done
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="irich-richtext-preview" title="Double click to edit">
+          <IRichTextRenderer content={content} dir={dir} lang={lang} />
+          {isSelected && !isEditing && (
+            <div className="irich-richtext-click-prompt">
               <button
                 type="button"
-                className="irich-richtext-done-btn"
+                className="irich-richtext-edit-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsEditing(false);
+                  setIsEditing(true);
                 }}
               >
-                ✓ Done
+                ✎ Edit Rich Text
               </button>
             </div>
-          </div>
-        ) : (
-          <div className="irich-richtext-preview" title="Double click to edit">
-            <IRichTextRenderer content={content} />
-            {isSelected && !isEditing && (
-              <div className="irich-richtext-click-prompt">
-                <button
-                  type="button"
-                  className="irich-richtext-edit-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditing(true);
-                  }}
-                >
-                  ✎ Edit Rich Text
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </NodeWrapper>
-  );
-};
-
-// 8. Root Renderer
-export const RootRenderer: React.FC<NodeRendererProps> = ({ node, children }) => {
-  const { setNodeRef, isOver } = useIRichDroppableContainer({
-    parentId: 'root',
-  });
-  const hasChildren = node.children && node.children.length > 0;
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`irich-root-container ${isOver ? 'irich-root-droppable-active' : ''}`}
-    >
-      {hasChildren ? (
-        children
-      ) : (
-        <div className="irich-empty-canvas-dropzone">
-          <p>Drag components here to start building your page.</p>
+          )}
         </div>
       )}
     </div>
@@ -445,7 +304,6 @@ export const RootRenderer: React.FC<NodeRendererProps> = ({ node, children }) =>
  * Map of React component renderers for the playground canvas.
  */
 export const playgroundComponentRenderers: ComponentMap = {
-  root: RootRenderer,
   Container: ContainerRenderer,
   Heading: HeadingRenderer,
   Text: TextRenderer,
@@ -454,4 +312,5 @@ export const playgroundComponentRenderers: ComponentMap = {
   Card: CardRenderer,
   Hero: HeroRenderer,
 };
+
 

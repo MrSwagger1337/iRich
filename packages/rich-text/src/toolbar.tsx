@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * @irich/rich-text
  * Formatting toolbars (docked and floating bubble) for rich-text authoring.
@@ -133,7 +135,10 @@ export function RichTextToolbar({
           title={controller.isActive('link') ? 'Remove link' : 'Add link'}
           aria-label="Link"
         >
-          🔗
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
         </button>
       </div>
 
@@ -148,7 +153,14 @@ export function RichTextToolbar({
           title="Bullet list"
           aria-label="Bullet list"
         >
-          • List
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <circle cx="4" cy="6" r="1.5" fill="currentColor" />
+            <circle cx="4" cy="12" r="1.5" fill="currentColor" />
+            <circle cx="4" cy="18" r="1.5" fill="currentColor" />
+          </svg>
         </button>
         <button
           type="button"
@@ -157,7 +169,14 @@ export function RichTextToolbar({
           title="Numbered list"
           aria-label="Numbered list"
         >
-          1. List
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="10" y1="6" x2="21" y2="6" />
+            <line x1="10" y1="12" x2="21" y2="12" />
+            <line x1="10" y1="18" x2="21" y2="18" />
+            <path d="M4 6h1.5v4" />
+            <path d="M3 10h3.5" />
+            <path d="M3 14h2a1.5 1.5 0 0 1 1.5 1.5c0 .7-.5 1.2-1 1.5H3v1h4" />
+          </svg>
         </button>
         <button
           type="button"
@@ -166,7 +185,9 @@ export function RichTextToolbar({
           title="Blockquote"
           aria-label="Blockquote"
         >
-          ” Quote
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z" />
+          </svg>
         </button>
       </div>
 
@@ -182,7 +203,10 @@ export function RichTextToolbar({
           title="Undo (Ctrl+Z)"
           aria-label="Undo"
         >
-          ↺
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 7v6h6" />
+            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+          </svg>
         </button>
         <button
           type="button"
@@ -192,7 +216,10 @@ export function RichTextToolbar({
           title="Redo (Ctrl+Y)"
           aria-label="Redo"
         >
-          ↻
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 7v6h-6" />
+            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7" />
+          </svg>
         </button>
       </div>
 

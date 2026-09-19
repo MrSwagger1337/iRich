@@ -18,7 +18,22 @@ import type {
   UseIRichHistoryResult,
   UseIRichResult,
   UseIRichSelectionResult,
+  UseIRichUIDirectionResult,
 } from './types';
+
+/**
+ * Subscribes to the active editor UI chrome direction ('ltr' | 'rtl').
+ */
+export function useIRichUIDirection(): UseIRichUIDirectionResult {
+  const { uiDirection, setUIDirection } = useIRichContext();
+  return useMemo(
+    () => ({
+      uiDirection,
+      setUIDirection,
+    }),
+    [uiDirection, setUIDirection],
+  );
+}
 
 /**
  * Accesses the stable EditorInstance from context.
@@ -189,6 +204,7 @@ export function useIRichHistory(): UseIRichHistoryResult {
  */
 export function useIRich(): UseIRichResult {
   const editor = useIRichEditor();
+  const { uiDirection, setUIDirection } = useIRichUIDirection();
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
@@ -242,6 +258,8 @@ export function useIRich(): UseIRichResult {
       breakpoint: state.activeBreakpoint,
       canUndo: state.canUndo,
       canRedo: state.canRedo,
+      uiDirection,
+      setUIDirection,
       selectNode,
       clearSelection,
       setBreakpoint,
@@ -249,7 +267,7 @@ export function useIRich(): UseIRichResult {
       redo,
       clearHistory,
     }),
-    [editor, state, selectNode, clearSelection, setBreakpoint, undo, redo, clearHistory],
+    [editor, state, uiDirection, setUIDirection, selectNode, clearSelection, setBreakpoint, undo, redo, clearHistory],
   );
 }
 

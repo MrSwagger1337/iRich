@@ -229,6 +229,9 @@ export class Editor implements EditorInstance {
         typeof payload === 'string' ? { targetParentId: payload } : payload;
       return this.executePasteNode(normalizedPayload);
     },
+    replaceDocument: (document: IRichDocument): void => {
+      this.executeReplaceDocument(document);
+    },
     selectNode: (nodeId: NodeId | null): void => {
       this.executeSelectNode(nodeId);
     },
@@ -253,6 +256,65 @@ export class Editor implements EditorInstance {
   };
 
   // --- COMMAND IMPLEMENTATIONS ---
+
+  private executeReplaceDocument(newDoc: IRichDocument): void {
+    if (!newDoc || typeof newDoc !== 'object') {
+      throw new ValidationError(['Document to replace must be a non-null object.']);
+    }
+
+    const validation = validateDocument(newDoc, { registry: this.registry });
+    if (!validation.valid) {
+      throw new ValidationError([...validation.errors]);
+    }
+
+    const prevDoc = this.state.document;
+    const prevSelection = this.state.selection;
+
+    // Calculate deterministic selection:
+    // If previously selected node exists in newDoc, retain selection; otherwise reset to null.
+    let nextSelection = prevSelection;
+    if (nextSelection !== null && !findNodeById(newDoc, nextSelection)) {
+      nextSelection = null;
+    }
+
+    if (!this.isBatching) {
+      this.history.record(
+        { document: prevDoc, selection: prevSelection },
+        { document: newDoc, selection: nextSelection },
+        'replaceDocument',
+      );
+    }
+
+    this.state = {
+      ...this.state,
+      document: newDoc,
+      selection: nextSelection,
+      canUndo: this.history.canUndo(),
+      canRedo: this.history.canRedo(),
+    };
+
+    if (!this.isBatching) {
+      this.emitter.emit('document:replace', {
+        document: newDoc,
+        previousDocument: prevDoc,
+      });
+
+      this.emitter.emit('document:change', {
+        document: newDoc,
+        previousDocument: prevDoc,
+      });
+
+      if (nextSelection !== prevSelection) {
+        this.emitter.emit('selection:change', {
+          selection: nextSelection,
+          previousSelection: prevSelection,
+        });
+      }
+
+      this.notifyStateSubscribers();
+      this.notifyAllNodeSubscribers();
+    }
+  }
 
   private executeInsertNode(payload: InsertNodePayload): NodeId {
     let nodeToInsert = payload.node;
