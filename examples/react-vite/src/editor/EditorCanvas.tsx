@@ -16,13 +16,7 @@ import {
   type RichTextDocument,
 } from '@irich/react';
 import { createViteRegistry } from '../components/definitions';
-import {
-  ButtonRenderer,
-  CardRenderer,
-  ContainerRenderer,
-  HeadingRenderer,
-  HeroRenderer,
-} from '../components/renderers';
+import { viteRenderers } from '../components/renderers';
 
 /**
  * Interactive RichText renderer for visual canvas editing mode.
@@ -117,14 +111,18 @@ function InteractiveRichTextRenderer({
   );
 }
 
-const interactiveRenderers: ComponentMap = {
-  Hero: HeroRenderer,
-  Heading: HeadingRenderer,
-  RichText: InteractiveRichTextRenderer,
-  Container: ContainerRenderer,
-  Card: CardRenderer,
-  Button: ButtonRenderer,
-};
+/**
+ * Creates the Vite visual editor component map, composing the complete
+ * published editorial renderers with the interactive RichText editing component.
+ */
+export function createViteEditorComponentMap(): ComponentMap {
+  return {
+    ...viteRenderers,
+    RichText: InteractiveRichTextRenderer,
+  };
+}
+
+export const viteEditorRenderers: ComponentMap = createViteEditorComponentMap();
 
 export function EditorCanvas() {
   const { breakpoint } = useIRichBreakpoint();
@@ -133,7 +131,7 @@ export function EditorCanvas() {
   return (
     <main className="vite-editor-canvas-container" aria-label="Visual Canvas">
       <IRichCanvas
-        components={interactiveRenderers}
+        components={viteEditorRenderers}
         registry={registry}
         breakpoint={breakpoint}
         className="vite-canvas-viewport"

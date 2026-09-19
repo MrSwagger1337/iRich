@@ -17,15 +17,9 @@ import {
   type RichTextDocument,
 } from '@irich/react';
 import { createNextjsRegistry } from '../app/components/definitions';
-import {
-  ButtonRenderer,
-  CardRenderer,
-  ContainerRenderer,
-  HeadingRenderer,
-  HeroRenderer,
-} from '../app/components/renderers';
+import { nextjsRenderers } from '../app/components/renderers';
 
-function InteractiveRichTextRenderer({
+export function InteractiveRichTextRenderer({
   node,
   content,
   placeholder = 'Click to edit formatted prose...',
@@ -112,14 +106,18 @@ function InteractiveRichTextRenderer({
   );
 }
 
-const interactiveRenderers: ComponentMap = {
-  Hero: HeroRenderer,
-  Heading: HeadingRenderer,
-  RichText: InteractiveRichTextRenderer,
-  Container: ContainerRenderer,
-  Card: CardRenderer,
-  Button: ButtonRenderer,
-};
+/**
+ * Creates the Next.js visual editor component map, composing the complete
+ * published editorial renderers with the interactive RichText editing component.
+ */
+export function createNextjsEditorComponentMap(): ComponentMap {
+  return {
+    ...nextjsRenderers,
+    RichText: InteractiveRichTextRenderer,
+  };
+}
+
+export const nextjsEditorRenderers: ComponentMap = createNextjsEditorComponentMap();
 
 export function EditorCanvas() {
   const { breakpoint } = useIRichBreakpoint();
@@ -127,7 +125,7 @@ export function EditorCanvas() {
 
   return (
     <IRichCanvas
-      components={interactiveRenderers}
+      components={nextjsEditorRenderers}
       registry={registry}
       breakpoint={breakpoint}
       className="irich-editor-canvas-container"

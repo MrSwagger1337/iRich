@@ -10,7 +10,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createEditor } from '@irich/core';
+import { createEditor, type IRichNode } from '@irich/core';
 import { IRichRenderer } from '@irich/renderer';
 import {
   IRichProvider,
@@ -22,9 +22,36 @@ import {
 import { viteRenderers } from './components/renderers';
 import { initialViteDocument } from './components/sample-document';
 import { initialArabicViteDocument } from './components/sample-document-arabic';
-import { EditorCanvas } from './editor/EditorCanvas';
+import { EditorCanvas, viteEditorRenderers, createViteEditorComponentMap } from './editor/EditorCanvas';
 import { ComponentPalette } from './editor/ComponentPalette';
 import App from './App';
+
+// Helper to recursively collect all unique node types from a document
+function collectUniqueNodeTypes(node: IRichNode): Set<string> {
+  const set = new Set<string>();
+  if (node.type !== 'root') {
+    set.add(node.type);
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      for (const t of collectUniqueNodeTypes(child)) {
+        set.add(t);
+      }
+    }
+  }
+  if (node.slots) {
+    for (const slotNodes of Object.values(node.slots)) {
+      if (slotNodes) {
+        for (const child of slotNodes) {
+          for (const t of collectUniqueNodeTypes(child)) {
+            set.add(t);
+          }
+        }
+      }
+    }
+  }
+  return set;
+}
 
 // Configure React act() environment
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,7 +134,26 @@ describe('React + Vite Consumer Integration', () => {
     expect(html).toContain('المزايا المعمارية لمنظومة iRich');
   });
 
-  it('mounts canonical IRichCanvas inside IRichProvider with Phase 4 canvas contract', async () => {
+  it('enforces editor component-map completeness across all document node types', () => {
+    const editorComponents = createViteEditorComponentMap();
+    const docTypes = collectUniqueNodeTypes(initialViteDocument.root);
+    const arDocTypes = collectUniqueNodeTypes(initialArabicViteDocument.root);
+    const allTypes = new Set([...docTypes, ...arDocTypes]);
+
+    // Every unique node type in the document must have a registered renderer in the editor map
+    for (const type of allTypes) {
+      expect(
+        editorComponents[type],
+        `Missing editor renderer in createViteEditorComponentMap for node type: "${type}"`
+      ).toBeDefined();
+      expect(
+        viteEditorRenderers[type],
+        `Missing editor renderer in viteEditorRenderers for node type: "${type}"`
+      ).toBeDefined();
+    }
+  });
+
+  it('mounts canonical IRichCanvas without unknown component fallbacks and renders all editorial nodes', async () => {
     const registry = createViteRegistry();
     const editor = createEditor({
       registry,
@@ -125,8 +171,73 @@ describe('React + Vite Consumer Integration', () => {
     const canvasElement = container!.querySelector('[data-irich-canvas="true"]');
     expect(canvasElement).not.toBeNull();
 
-    const nodeElements = container!.querySelectorAll('[data-irich-node="true"]');
-    expect(nodeElements.length).toBeGreaterThan(0);
+    // Regression check: ZERO unknown component fallbacks
+    const fallbackElements = container!.querySelectorAll('.irich-unknown-component-fallback');
+    expect(fallbackElements.length).toBe(0);
+    expect(container!.textContent).not.toContain('Unknown Component');
+
+    // Regression check: All representative Phase 6 editorial components rendered
+    expect(container!.querySelector('[data-irich-editorial="section"]')).not.toBeNull();
+    expect(container!.querySelector('[data-irich-editorial="columns"]')).not.toBeNull();
+    expect(container!.querySelector('[data-irich-editorial="column"]')).not.toBeNull();
+    expect(container!.querySelector('[data-irich-editorial="image"]')).not.toBeNull();
+    expect(container!.querySelector('[data-irich-editorial="callout"]')).not.toBeNull();
+    expect(container!.querySelector('[data-irich-editorial="quote"]')).not.toBeNull();
+    expect(container!.querySelector('[data-irich-editorial="takeaway"]')).not.toBeNull();
+    expect(container!.querySelector('[data-irich-editorial="card-grid"]')).not.toBeNull();
+    expect(container!.querySelector('[data-irich-editorial="cta"]')).not.toBeNull();
+    expect(container!.querySelector('[data-irich-editorial="heading"]')).not.toBeNull();
+    expect(container!.querySelector('[data-irich-editorial="button"]')).not.toBeNull();
+
+    editor.destroy();
+  });
+
+  it('preserves interactive RichText editing in the visual canvas', async () => {
+    const registry = createViteRegistry();
+    const editor = createEditor({
+      registry,
+      initialDocument: initialViteDocument,
+    });
+
+    await act(async () => {
+      root!.render(
+        <IRichProvider editor={editor}>
+          <EditorCanvas />
+        </IRichProvider>
+      );
+    });
+
+    // Verify interactive RichText containers exist
+    const richTextElements = container!.querySelectorAll('.vite-richtext-interactive');
+    expect(richTextElements.length).toBeGreaterThan(0);
+
+    // Select the RichText node so isSelected becomes true
+    await act(async () => {
+      editor.commands.selectNode('text-intro-lead');
+    });
+
+    // Verify edit overlay appears when selected
+    const editBtn = container!.querySelector('.vite-richtext-edit-overlay button') as HTMLButtonElement;
+    expect(editBtn).not.toBeNull();
+
+    // Click "Edit Prose" to open active Tiptap editor box
+    await act(async () => {
+      editBtn.click();
+    });
+
+    // Verify active editor box with toolbar and Done button appears
+    const editorBox = container!.querySelector('.vite-richtext-editor-box');
+    expect(editorBox).not.toBeNull();
+
+    // Click Done to finish editing
+    const doneBtn = editorBox!.querySelector('button.vite-btn-primary') as HTMLButtonElement;
+    expect(doneBtn).not.toBeNull();
+    await act(async () => {
+      doneBtn.click();
+    });
+
+    // Returned to view box
+    expect(container!.querySelector('.vite-richtext-editor-box')).toBeNull();
 
     editor.destroy();
   });

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderToString } from 'react-dom/server';
 import { IRichRenderer } from '@irich/renderer';
-import type { IRichDocument } from '@irich/core';
+import type { IRichDocument, IRichNode } from '@irich/core';
 import { createEditorialComponentMap } from './renderers';
 import { redesignedEditorialDocument, arabicEditorialDocument } from './fixtures/article-redesign';
 
@@ -84,5 +84,42 @@ describe('@irich/editorial React Component Renderers (SSR / IRichRenderer)', () 
     expect(html).not.toContain('javascript:alert(1)');
     expect(html).toContain('href="#"');
     expect(html).toContain('No image source specified');
+  });
+
+  it('guarantees createEditorialComponentMap contains every unique node type in editorial fixtures', () => {
+    function collectTypes(node: IRichNode): Set<string> {
+      const set = new Set<string>();
+      if (node.type !== 'root') {
+        set.add(node.type);
+      }
+      if (node.children) {
+        for (const child of node.children) {
+          for (const t of collectTypes(child)) {
+            set.add(t);
+          }
+        }
+      }
+      if (node.slots) {
+        const slotLists = Object.values(node.slots) as IRichNode[][];
+        for (const slotList of slotLists) {
+          if (Array.isArray(slotList)) {
+            for (const child of slotList) {
+              for (const t of collectTypes(child)) {
+                set.add(t);
+              }
+            }
+          }
+        }
+      }
+      return set;
+    }
+
+    const docTypes = collectTypes(redesignedEditorialDocument.root);
+    const arDocTypes = collectTypes(arabicEditorialDocument.root);
+    const allTypes = new Set([...docTypes, ...arDocTypes]);
+
+    for (const type of allTypes) {
+      expect(components[type], `Missing renderer in editorialComponentMap for "${type}"`).toBeDefined();
+    }
   });
 });
