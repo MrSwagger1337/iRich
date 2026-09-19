@@ -6,15 +6,14 @@
 import { useMemo } from 'react';
 import {
   canPlaceNode,
-  createNode,
   findNodeById,
   findParent,
+  instantiateComponentNode,
   isDescendantOf,
   type ComponentRegistry,
   type EditorInstance,
   type IRichDocument,
   type IRichNode,
-  type JSONValue,
   type NodeId,
 } from '@irich/core';
 import { useIRichDocument, useIRichEditor, useIRichSelection } from '../hooks';
@@ -210,15 +209,7 @@ export function executeDrop(options: ExecuteDropOptions): NodeId | null {
   // 1. Insertion from component palette
   if (paletteType) {
     const reg = registry ?? editor.getRegistry();
-    const defaultProps = reg ? reg.getDefaultProps(paletteType) : {};
-    const compDef = reg?.get(paletteType);
-    const canHaveChildren = compDef ? compDef.canHaveChildren !== false : false;
-
-    const newNode = createNode({
-      type: paletteType,
-      props: defaultProps as Record<string, JSONValue>,
-      children: canHaveChildren ? [] : undefined,
-    });
+    const newNode = instantiateComponentNode(paletteType, reg);
 
     editor.commands.insertNode({
       node: newNode,

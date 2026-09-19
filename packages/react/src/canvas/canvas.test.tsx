@@ -531,4 +531,366 @@ describe('Visual Canvas & DnD Foundation (@irich/react/canvas)', () => {
 
     rtlEditor.destroy();
   });
+
+  // =========================================================================
+  // 9. PHASE 6 NESTED COMPOSITION & COMPONENT SCAFFOLDING INITIALIZATION
+  // =========================================================================
+  describe('Nested Structural Scaffolding & Placement Validation', () => {
+    let editorialEditor: EditorInstance;
+    const editorialReg = createComponentRegistry();
+
+    editorialReg.register(
+      defineComponent({
+        type: 'Column',
+        label: 'Column',
+        canHaveChildren: true,
+        allowedParents: ['Columns'],
+        fields: {},
+      }),
+    );
+    editorialReg.register(
+      defineComponent({
+        type: 'Columns',
+        label: 'Columns',
+        canHaveChildren: true,
+        allowedChildren: ['Column'],
+        fields: {
+          layout: { type: 'select', defaultValue: 'equal' },
+        },
+        createInitialState: () => ({
+          children: [{ type: 'Column' }, { type: 'Column' }],
+        }),
+      }),
+    );
+    editorialReg.register(
+      defineComponent({
+        type: 'CardGrid',
+        label: 'Card Grid',
+        canHaveChildren: true,
+        allowedChildren: ['Card'],
+        fields: {
+          columns: { type: 'number', defaultValue: 3 },
+        },
+      }),
+    );
+    editorialReg.register(
+      defineComponent({
+        type: 'Card',
+        label: 'Card',
+        canHaveChildren: true,
+        allowedParents: ['CardGrid'],
+        fields: {},
+      }),
+    );
+    editorialReg.register(
+      defineComponent({
+        type: 'RichText',
+        label: 'Rich Text',
+        canHaveChildren: false,
+        fields: {
+          content: { type: 'custom', defaultValue: { type: 'doc', content: [] } },
+        },
+      }),
+    );
+
+    const editorialComponents: ComponentMap = {
+      Columns: ({ id, children }) => <div className="test-columns" data-id={id}>{children}</div>,
+      Column: ({ id, children }) => <div className="test-column" data-id={id}>{children}</div>,
+      CardGrid: ({ id, children }) => <div className="test-card-grid" data-id={id}>{children}</div>,
+      Card: ({ id, children }) => <div className="test-card" data-id={id}>{children}</div>,
+      RichText: ({ id }) => <div className="test-rich-text" data-id={id}>RichText Content</div>,
+    };
+
+    beforeEach(() => {
+      const doc = createDocument({
+        root: { children: [] },
+      });
+      editorialEditor = createEditor({
+        initialDocument: doc,
+        registry: editorialReg,
+      });
+    });
+
+    afterEach(() => {
+      editorialEditor.destroy();
+    });
+
+    it('scaffolds Columns with exactly two Column children on palette drag drop', () => {
+      const res = resolveInsertionLocation({
+        document: editorialEditor.getDocument(),
+        target: { targetNodeId: editorialEditor.getDocument().root.id, position: 'inside' },
+        registry: editorialReg,
+        paletteType: 'Columns',
+      });
+      expect(res.isAllowed).toBe(true);
+
+      const insertedId = executeDrop({
+        editor: editorialEditor,
+        document: editorialEditor.getDocument(),
+        resolution: res,
+        paletteType: 'Columns',
+        registry: editorialReg,
+      });
+
+      expect(insertedId).toBeTruthy();
+      const doc = editorialEditor.getDocument();
+      expect(doc.root.children?.length).toBe(1);
+
+      const colsNode = doc.root.children![0];
+      expect(colsNode.type).toBe('Columns');
+      expect(colsNode.children?.length).toBe(2);
+
+      const [col1, col2] = colsNode.children!;
+      expect(col1.type).toBe('Column');
+      expect(col2.type).toBe('Column');
+      expect(col1.children).toEqual([]);
+      expect(col2.children).toEqual([]);
+      expect(col1.id).not.toBe(col2.id);
+      expect(colsNode.id).not.toBe(col1.id);
+    });
+
+    it('scaffolds Columns with exactly two Column children on palette click insertion', () => {
+      act(() => {
+        root?.render(
+          <IRichProvider editor={editorialEditor}>
+            <IRichPaletteItem componentType="Columns" label="2 Columns" />
+          </IRichProvider>,
+        );
+      });
+
+      const btn = container?.querySelector('[data-irich-palette-item="Columns"]');
+      expect(btn).toBeTruthy();
+
+      act(() => {
+        btn?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+
+      const doc = editorialEditor.getDocument();
+      expect(doc.root.children?.length).toBe(1);
+      const colsNode = doc.root.children![0];
+      expect(colsNode.type).toBe('Columns');
+      expect(colsNode.children?.length).toBe(2);
+      expect(colsNode.children![0].type).toBe('Column');
+      expect(colsNode.children![1].type).toBe('Column');
+    });
+
+    it('treats Columns scaffolding as one atomic history action: undo removes entire subtree, redo restores it', () => {
+      const res = resolveInsertionLocation({
+        document: editorialEditor.getDocument(),
+        target: { targetNodeId: editorialEditor.getDocument().root.id, position: 'inside' },
+        registry: editorialReg,
+        paletteType: 'Columns',
+      });
+
+      executeDrop({
+        editor: editorialEditor,
+        document: editorialEditor.getDocument(),
+        resolution: res,
+        paletteType: 'Columns',
+        registry: editorialReg,
+      });
+
+      expect(editorialEditor.getDocument().root.children?.length).toBe(1);
+
+      // Single undo removes Columns and its 2 Column children
+      act(() => {
+        editorialEditor.commands.undo();
+      });
+      expect(editorialEditor.getDocument().root.children?.length).toBe(0);
+
+      // Single redo restores entire subtree
+      act(() => {
+        editorialEditor.commands.redo();
+      });
+      const doc = editorialEditor.getDocument();
+      expect(doc.root.children?.length).toBe(1);
+      expect(doc.root.children![0].children?.length).toBe(2);
+    });
+
+    it('allows RichText drop into generated Column and rejects direct drop under Columns', () => {
+      // 1. Scaffold Columns
+      const res = resolveInsertionLocation({
+        document: editorialEditor.getDocument(),
+        target: { targetNodeId: editorialEditor.getDocument().root.id, position: 'inside' },
+        registry: editorialReg,
+        paletteType: 'Columns',
+      });
+      executeDrop({
+        editor: editorialEditor,
+        document: editorialEditor.getDocument(),
+        resolution: res,
+        paletteType: 'Columns',
+        registry: editorialReg,
+      });
+
+      const colsNode = editorialEditor.getDocument().root.children![0];
+      const col1 = colsNode.children![0];
+
+      // 2. Drop RichText inside Column 1 -> allowed
+      const richTextRes = resolveInsertionLocation({
+        document: editorialEditor.getDocument(),
+        target: { targetNodeId: col1.id, position: 'inside' },
+        registry: editorialReg,
+        paletteType: 'RichText',
+      });
+      expect(richTextRes.isAllowed).toBe(true);
+
+      const richTextId = executeDrop({
+        editor: editorialEditor,
+        document: editorialEditor.getDocument(),
+        resolution: richTextRes,
+        paletteType: 'RichText',
+        registry: editorialReg,
+      });
+      expect(richTextId).toBeTruthy();
+
+      const updatedDoc = editorialEditor.getDocument();
+      const updatedCol1 = updatedDoc.root.children![0].children![0];
+      expect(updatedCol1.children?.length).toBe(1);
+      expect(updatedCol1.children![0].type).toBe('RichText');
+
+      // 3. Drop RichText directly inside Columns -> rejected by placement rules (only Column allowed)
+      const invalidRes = resolveInsertionLocation({
+        document: updatedDoc,
+        target: { targetNodeId: colsNode.id, position: 'inside' },
+        registry: editorialReg,
+        paletteType: 'RichText',
+      });
+      expect(invalidRes.isAllowed).toBe(false);
+      expect(invalidRes.code).toBe('CHILD_TYPE_NOT_ALLOWED');
+    });
+
+    it('allows moving content between generated Columns', () => {
+      // Scaffold Columns
+      const res = resolveInsertionLocation({
+        document: editorialEditor.getDocument(),
+        target: { targetNodeId: editorialEditor.getDocument().root.id, position: 'inside' },
+        registry: editorialReg,
+        paletteType: 'Columns',
+      });
+      executeDrop({
+        editor: editorialEditor,
+        document: editorialEditor.getDocument(),
+        resolution: res,
+        paletteType: 'Columns',
+        registry: editorialReg,
+      });
+
+      const col1Id = editorialEditor.getDocument().root.children![0].children![0].id;
+      const col2Id = editorialEditor.getDocument().root.children![0].children![1].id;
+
+      // Insert RichText into col1
+      const rtRes = resolveInsertionLocation({
+        document: editorialEditor.getDocument(),
+        target: { targetNodeId: col1Id, position: 'inside' },
+        registry: editorialReg,
+        paletteType: 'RichText',
+      });
+      const rtId = executeDrop({
+        editor: editorialEditor,
+        document: editorialEditor.getDocument(),
+        resolution: rtRes,
+        paletteType: 'RichText',
+        registry: editorialReg,
+      })!;
+
+      // Move RichText from col1 to col2
+      const moveRes = resolveInsertionLocation({
+        document: editorialEditor.getDocument(),
+        target: { targetNodeId: col2Id, position: 'inside' },
+        registry: editorialReg,
+        sourceNodeId: rtId,
+      });
+      expect(moveRes.isAllowed).toBe(true);
+
+      executeDrop({
+        editor: editorialEditor,
+        document: editorialEditor.getDocument(),
+        resolution: moveRes,
+        sourceNodeId: rtId,
+        registry: editorialReg,
+      });
+
+      const docAfterMove = editorialEditor.getDocument();
+      const updatedCol1 = docAfterMove.root.children![0].children![0];
+      const updatedCol2 = docAfterMove.root.children![0].children![1];
+      expect(updatedCol1.children?.length).toBe(0);
+      expect(updatedCol2.children?.length).toBe(1);
+      expect(updatedCol2.children![0].id).toBe(rtId);
+    });
+
+    it('keeps CardGrid empty initially and displays singular child hint "CardGrid is empty — Drop Card here"', () => {
+      // 1. Insert CardGrid
+      const gridRes = resolveInsertionLocation({
+        document: editorialEditor.getDocument(),
+        target: { targetNodeId: editorialEditor.getDocument().root.id, position: 'inside' },
+        registry: editorialReg,
+        paletteType: 'CardGrid',
+      });
+      const gridId = executeDrop({
+        editor: editorialEditor,
+        document: editorialEditor.getDocument(),
+        resolution: gridRes,
+        paletteType: 'CardGrid',
+        registry: editorialReg,
+      })!;
+
+      const gridNode = editorialEditor.getDocument().root.children![0];
+      expect(gridNode.type).toBe('CardGrid');
+      expect(gridNode.children?.length).toBe(0);
+
+      // 2. Render canvas and verify empty slot message
+      act(() => {
+        root?.render(
+          <IRichProvider editor={editorialEditor}>
+            <IRichCanvas components={editorialComponents} registry={editorialReg} />
+          </IRichProvider>,
+        );
+      });
+
+      const emptySlot = container?.querySelector('[data-irich-empty-slot="true"]');
+      expect(emptySlot).toBeTruthy();
+      expect(emptySlot?.textContent).toContain('CardGrid is empty — Drop Card here');
+
+      // 3. Drop Card into CardGrid
+      const cardRes = resolveInsertionLocation({
+        document: editorialEditor.getDocument(),
+        target: { targetNodeId: gridId, position: 'inside' },
+        registry: editorialReg,
+        paletteType: 'Card',
+      });
+      expect(cardRes.isAllowed).toBe(true);
+
+      const cardId = executeDrop({
+        editor: editorialEditor,
+        document: editorialEditor.getDocument(),
+        resolution: cardRes,
+        paletteType: 'Card',
+        registry: editorialReg,
+      })!;
+
+      // 4. Drop RichText into Card
+      const rtRes = resolveInsertionLocation({
+        document: editorialEditor.getDocument(),
+        target: { targetNodeId: cardId, position: 'inside' },
+        registry: editorialReg,
+        paletteType: 'RichText',
+      });
+      expect(rtRes.isAllowed).toBe(true);
+
+      executeDrop({
+        editor: editorialEditor,
+        document: editorialEditor.getDocument(),
+        resolution: rtRes,
+        paletteType: 'RichText',
+        registry: editorialReg,
+      });
+
+      const doc = editorialEditor.getDocument();
+      const updatedCard = doc.root.children![0].children![0];
+      expect(updatedCard.type).toBe('Card');
+      expect(updatedCard.children?.length).toBe(1);
+      expect(updatedCard.children![0].type).toBe('RichText');
+    });
+  });
 });

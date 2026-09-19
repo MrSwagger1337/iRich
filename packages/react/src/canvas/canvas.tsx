@@ -77,6 +77,16 @@ function DefaultEmptySlot({
     }
   };
 
+  const reg = registry ?? editor.getRegistry();
+  const parentDef = reg?.get(parentType);
+  let emptyMessage = `${parentType} is empty — Drop components here`;
+  if (parentDef?.allowedChildren && parentDef.allowedChildren.length === 1) {
+    const allowedChildType = parentDef.allowedChildren[0];
+    const childDef = reg?.get(allowedChildType);
+    const childLabel = childDef?.label ?? allowedChildType;
+    emptyMessage = `${parentType} is empty — Drop ${childLabel} here`;
+  }
+
   return (
     <div
       className={`irich-container-empty-slot ${isOver ? 'active' : ''}`}
@@ -88,7 +98,7 @@ function DefaultEmptySlot({
     >
       <span className="irich-slot-icon">+</span>
       <span className="irich-slot-text">
-        {parentType} is empty — Drop components here
+        {emptyMessage}
       </span>
     </div>
   );

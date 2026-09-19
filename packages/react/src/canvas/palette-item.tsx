@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { createNode, type JSONValue } from '@irich/core';
+import { instantiateComponentNode } from '@irich/core';
 import { useIRichDocument, useIRichEditor, useIRichSelection } from '../hooks';
 import {
   IRICH_DND_MIME,
@@ -34,15 +34,7 @@ export function useIRichPaletteDraggable({
     }
 
     const registry = editor.getRegistry();
-    const defaultProps = registry ? registry.getDefaultProps(componentType) : {};
-    const compDef = registry?.get(componentType);
-    const canHaveChildren = compDef ? compDef.canHaveChildren !== false : false;
-
-    const newNode = createNode({
-      type: componentType,
-      props: defaultProps as Record<string, JSONValue>,
-      children: canHaveChildren ? [] : undefined,
-    });
+    const newNode = instantiateComponentNode(componentType, registry);
 
     // Default target: inside selected container if one is selected, else root document
     let targetParentId = document.root.id;

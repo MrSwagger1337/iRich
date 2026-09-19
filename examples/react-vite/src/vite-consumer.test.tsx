@@ -557,5 +557,88 @@ describe('React + Vite Consumer Integration', () => {
     expect(loadedAr.metadata.locale).toBe('ar');
     expect(loadedAr.metadata.direction).toBe('rtl');
   });
+
+  it('scaffolds Columns with two Column children and allows inserting nested RichText without manual JSON editing', async () => {
+    const registry = createViteRegistry();
+    const emptyDoc: IRichDocument = {
+      version: '1.0.0',
+      root: {
+        id: 'root-empty',
+        type: 'root',
+        props: {},
+        children: [],
+      },
+    };
+
+    const editor = createEditor({
+      registry,
+      initialDocument: emptyDoc,
+    });
+
+    await act(async () => {
+      root!.render(
+        <IRichProvider editor={editor}>
+          <EditorCanvas />
+        </IRichProvider>
+      );
+    });
+
+    // 1. Insert Columns via palette insertion (instantiateComponentNode)
+    const { instantiateComponentNode } = await import('@irich/core');
+    const colsNode = instantiateComponentNode('Columns', registry);
+
+    await act(async () => {
+      editor.commands.insertNode({
+        node: colsNode,
+        parentId: 'root-empty',
+      });
+    });
+
+    const currentDoc = editor.getDocument();
+    expect(currentDoc.root.children?.length).toBe(1);
+    const cols = currentDoc.root.children![0];
+    expect(cols.type).toBe('Columns');
+    expect(cols.children?.length).toBe(2);
+
+    const [col1, col2] = cols.children!;
+    expect(col1.type).toBe('Column');
+    expect(col2.type).toBe('Column');
+    expect(col1.id).not.toBe(col2.id);
+
+    // 2. Insert RichText into the first scaffolded Column
+    const rtNode = instantiateComponentNode('RichText', registry, {
+      props: {
+        content: {
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: 'Nested column prose' }],
+            },
+          ],
+        } as never,
+      },
+    });
+
+    await act(async () => {
+      editor.commands.insertNode({
+        node: rtNode,
+        parentId: col1.id,
+      });
+    });
+
+    const updatedDoc = editor.getDocument();
+    const updatedCol1 = updatedDoc.root.children![0].children![0];
+    expect(updatedCol1.children?.length).toBe(1);
+    expect(updatedCol1.children![0].type).toBe('RichText');
+
+    // 3. Rendered in Canvas without errors or unknown components
+    const canvasElement = container!.querySelector('[data-irich-canvas="true"]');
+    expect(canvasElement).not.toBeNull();
+    expect(container!.textContent).toContain('Nested column prose');
+    expect(container!.querySelectorAll('.irich-unknown-component-fallback').length).toBe(0);
+
+    editor.destroy();
+  });
 });
 

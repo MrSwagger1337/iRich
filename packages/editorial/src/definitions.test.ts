@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateDocument, type IRichDocument } from '@irich/core';
+import { instantiateComponentNode, validateDocument, type IRichDocument } from '@irich/core';
 import {
   createEditorialRegistry,
   editorialDefinitions,
@@ -240,5 +240,46 @@ describe('@irich/editorial Component Definitions & Placement Rules', () => {
     const validAstResult = validateDocument(validAstDoc, { registry });
     expect(validAstResult.valid).toBe(true);
     expect(validAstResult.errors).toHaveLength(0);
+  });
+
+  it('scaffolds Columns with exactly 2 Column children having valid schema and unique IDs', () => {
+    const columnsNode = instantiateComponentNode('Columns', registry);
+
+    expect(columnsNode.type).toBe('Columns');
+    expect(columnsNode.props).toEqual({ layout: 'equal', gap: 'normal' });
+    expect(columnsNode.children).toHaveLength(2);
+
+    const [col1, col2] = columnsNode.children!;
+    expect(col1.type).toBe('Column');
+    expect(col2.type).toBe('Column');
+    expect(col1.props).toEqual({});
+    expect(col2.props).toEqual({});
+    expect(col1.children).toEqual([]);
+    expect(col2.children).toEqual([]);
+
+    expect(columnsNode.id).not.toBe(col1.id);
+    expect(columnsNode.id).not.toBe(col2.id);
+    expect(col1.id).not.toBe(col2.id);
+
+    const doc: IRichDocument = {
+      version: '1.0.0',
+      root: {
+        id: 'root-1',
+        type: 'root',
+        props: {},
+        children: [columnsNode],
+      },
+    };
+
+    const result = validateDocument(doc, { registry });
+    expect(result.valid).toBe(true);
+  });
+
+  it('does NOT auto-scaffold CardGrid children initially (Card is palette-visible)', () => {
+    const gridNode = instantiateComponentNode('CardGrid', registry);
+
+    expect(gridNode.type).toBe('CardGrid');
+    expect(gridNode.props).toEqual({ columns: '3', gap: 'normal' });
+    expect(gridNode.children).toEqual([]);
   });
 });

@@ -82,6 +82,12 @@ export const ColumnsComponent = defineComponent({
       ],
     },
   },
+  createInitialState: () => ({
+    children: [
+      { type: 'Column' },
+      { type: 'Column' },
+    ],
+  }),
 });
 
 /**
