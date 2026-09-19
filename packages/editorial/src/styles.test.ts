@@ -43,4 +43,27 @@ describe('@irich/editorial CSS Asset & Package Exports Contract', () => {
     expect(cssContent).toContain('border-inline-start');
     expect(cssContent).toContain('padding-block');
   });
+
+  it('declares container-type: inline-size on structural layout containers', () => {
+    const srcCssPath = path.join(packageDir, 'src', 'styles.css');
+    const cssContent = fs.readFileSync(srcCssPath, 'utf8');
+
+    // Structural containers must establish inline-size container query context
+    expect(cssContent).toMatch(/\.irich-editorial-section\s*\{[^}]*container-type:\s*inline-size/);
+    expect(cssContent).toMatch(/\.irich-editorial-container\s*\{[^}]*container-type:\s*inline-size/);
+    expect(cssContent).toMatch(/\.irich-editorial-column\s*\{[^}]*container-type:\s*inline-size/);
+  });
+
+  it('declares @container responsive stacking rules for Columns and CardGrid', () => {
+    const srcCssPath = path.join(packageDir, 'src', 'styles.css');
+    const cssContent = fs.readFileSync(srcCssPath, 'utf8');
+
+    // Columns collapse
+    expect(cssContent).toMatch(/@container\s*\(max-width:\s*640px\)\s*\{[^}]*\.irich-editorial-columns\s*\{[^}]*grid-template-columns:\s*1fr/);
+
+    // CardGrid collapse
+    expect(cssContent).toMatch(/@container\s*\(max-width:\s*840px\)/);
+    expect(cssContent).toMatch(/@container\s*\(max-width:\s*640px\)/);
+    expect(cssContent).toMatch(/@container\s*\(max-width:\s*480px\)\s*\{[^}]*\.irich-editorial-card-grid\s*\{[^}]*grid-template-columns:\s*1fr/);
+  });
 });
