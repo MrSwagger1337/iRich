@@ -395,6 +395,9 @@ importers:
       '@irich/core':
         specifier: workspace:*
         version: link:../core
+      '@irich/rich-text':
+        specifier: workspace:*
+        version: link:../rich-text
     devDependencies:
       '@irich/renderer':
         specifier: workspace:*

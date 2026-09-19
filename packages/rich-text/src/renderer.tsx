@@ -8,16 +8,26 @@ import type { ReactNode } from 'react';
 import type { IRichTextRendererProps, RichTextMark, RichTextNode } from './types';
 import { ensureRichTextDocument } from './utils';
 
+const DANGEROUS_PROTOCOL_REGEX = /^(?:javascript|vbscript|data|blob):/i;
+
+function isSafeLinkHref(url: string): boolean {
+  let start = 0;
+  while (start < url.length && url.charCodeAt(start) <= 32) {
+    start++;
+  }
+  return !DANGEROUS_PROTOCOL_REGEX.test(url.slice(start));
+}
+
 /**
  * Wraps a text React node with its corresponding inline marks.
  */
-function applyMarks(textNode: ReactNode, marks?: readonly RichTextMark[]): ReactNode {
+function applyMarks(textNode: ReactNode, marks?: readonly RichTextMark[], prefix = ''): ReactNode {
   if (!marks || marks.length === 0) {
     return textNode;
   }
 
   return marks.reduce<ReactNode>((acc, mark, idx) => {
-    const key = `mark-${mark.type}-${idx}`;
+    const key = `${prefix}-mark-${mark.type}-${idx}`;
     switch (mark.type) {
       case 'bold':
         return <strong key={key}>{acc}</strong>;
@@ -28,7 +38,8 @@ function applyMarks(textNode: ReactNode, marks?: readonly RichTextMark[]): React
       case 'code':
         return <code key={key} className="irich-inline-code">{acc}</code>;
       case 'link': {
-        const href = String(mark.attrs?.href ?? '#');
+        const rawHref = String(mark.attrs?.href ?? '#');
+        const href = isSafeLinkHref(rawHref) ? rawHref : '#';
         const target = mark.attrs?.target ? String(mark.attrs.target) : '_blank';
         return (
           <a
@@ -51,15 +62,15 @@ function applyMarks(textNode: ReactNode, marks?: readonly RichTextMark[]): React
 /**
  * Recursively renders an individual AST node and its children.
  */
-function renderAstNode(node: RichTextNode, index: number): ReactNode {
-  const key = `node-${node.type}-${index}`;
+function renderAstNode(node: RichTextNode, index: number, parentKey = 'rt'): ReactNode {
+  const key = `${parentKey}-${node.type}-${index}`;
 
   switch (node.type) {
     case 'text':
-      return applyMarks(node.text ?? '', node.marks);
+      return applyMarks(node.text ?? '', node.marks, key);
 
     case 'paragraph': {
-      const children = node.content?.map((child, i) => renderAstNode(child, i));
+      const children = node.content?.map((child, i) => renderAstNode(child, i, key));
       return (
         <p key={key} className="irich-rich-paragraph">
           {children && children.length > 0 ? children : <br />}
@@ -70,7 +81,7 @@ function renderAstNode(node: RichTextNode, index: number): ReactNode {
     case 'heading': {
       const level = Math.min(Math.max(Number(node.attrs?.level ?? 2), 1), 6) as 1 | 2 | 3 | 4 | 5 | 6;
       const HeadingTag = `h${level}` as const;
-      const children = node.content?.map((child, i) => renderAstNode(child, i));
+      const children = node.content?.map((child, i) => renderAstNode(child, i, key));
       return (
         <HeadingTag key={key} className={`irich-rich-heading irich-rich-h${level}`}>
           {children}
@@ -81,28 +92,28 @@ function renderAstNode(node: RichTextNode, index: number): ReactNode {
     case 'bulletList':
       return (
         <ul key={key} className="irich-rich-bullet-list">
-          {node.content?.map((child, i) => renderAstNode(child, i))}
+          {node.content?.map((child, i) => renderAstNode(child, i, key))}
         </ul>
       );
 
     case 'orderedList':
       return (
         <ol key={key} className="irich-rich-ordered-list">
-          {node.content?.map((child, i) => renderAstNode(child, i))}
+          {node.content?.map((child, i) => renderAstNode(child, i, key))}
         </ol>
       );
 
     case 'listItem':
       return (
         <li key={key} className="irich-rich-list-item">
-          {node.content?.map((child, i) => renderAstNode(child, i))}
+          {node.content?.map((child, i) => renderAstNode(child, i, key))}
         </li>
       );
 
     case 'blockquote':
       return (
         <blockquote key={key} className="irich-rich-blockquote">
-          {node.content?.map((child, i) => renderAstNode(child, i))}
+          {node.content?.map((child, i) => renderAstNode(child, i, key))}
         </blockquote>
       );
 
@@ -113,7 +124,7 @@ function renderAstNode(node: RichTextNode, index: number): ReactNode {
           className="irich-rich-code-block"
           dir={node.attrs?.dir ? String(node.attrs.dir) : 'ltr'}
         >
-          <code>{node.content?.map((child, i) => renderAstNode(child, i))}</code>
+          <code>{node.content?.map((child, i) => renderAstNode(child, i, key))}</code>
         </pre>
       );
 
@@ -127,7 +138,7 @@ function renderAstNode(node: RichTextNode, index: number): ReactNode {
       if (node.content && Array.isArray(node.content)) {
         return (
           <div key={key} className={`irich-rich-${node.type}`}>
-            {node.content.map((child, i) => renderAstNode(child, i))}
+            {node.content.map((child, i) => renderAstNode(child, i, key))}
           </div>
         );
       }

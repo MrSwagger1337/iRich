@@ -137,8 +137,9 @@ describe('@irich/editorial Component Definitions & Placement Rules', () => {
     expect(result.errors.some((e) => e.includes('not permitted as a child of "CTA"'))).toBe(true);
   });
 
-  it('enforces Quote allows only RichText children', () => {
-    const invalidDoc: IRichDocument = {
+  it('enforces RichText component rejects raw HTML strings and scripts during document validation', () => {
+    // 1. Raw HTML string fails validation
+    const htmlDoc: IRichDocument = {
       version: '1.0.0',
       root: {
         id: 'root',
@@ -146,19 +147,98 @@ describe('@irich/editorial Component Definitions & Placement Rules', () => {
         props: {},
         children: [
           {
-            id: 'quote-1',
-            type: 'Quote',
-            props: { attribution: 'Test Author' },
-            children: [
-              { id: 'btn-1', type: 'Button', props: { label: 'Click' } },
-            ],
+            id: 'text-html',
+            type: 'RichText',
+            props: {
+              content: '<p>Hello</p>',
+            },
           },
         ],
       },
     };
 
-    const result = validateDocument(invalidDoc, { registry });
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('not permitted as a child of "Quote"'))).toBe(true);
+    const htmlResult = validateDocument(htmlDoc, { registry });
+    expect(htmlResult.valid).toBe(false);
+    expect(htmlResult.errors.some((e) => e.includes('Raw HTML or string is not allowed for RichText content'))).toBe(true);
+
+    // 2. Script tag string fails validation
+    const scriptDoc: IRichDocument = {
+      version: '1.0.0',
+      root: {
+        id: 'root',
+        type: 'root',
+        props: {},
+        children: [
+          {
+            id: 'text-script',
+            type: 'RichText',
+            props: {
+              content: '<script>alert(1)</script>',
+            },
+          },
+        ],
+      },
+    };
+
+    const scriptResult = validateDocument(scriptDoc, { registry });
+    expect(scriptResult.valid).toBe(false);
+    expect(scriptResult.errors.some((e) => e.includes('Raw HTML or string is not allowed for RichText content'))).toBe(true);
+
+    // 3. Non-doc object fails validation
+    const invalidObjDoc: IRichDocument = {
+      version: '1.0.0',
+      root: {
+        id: 'root',
+        type: 'root',
+        props: {},
+        children: [
+          {
+            id: 'text-invalid-obj',
+            type: 'RichText',
+            props: {
+              content: { type: 'invalid_node' } as never,
+            },
+          },
+        ],
+      },
+    };
+
+    const invalidObjResult = validateDocument(invalidObjDoc, { registry });
+    expect(invalidObjResult.valid).toBe(false);
+    expect(invalidObjResult.errors.some((e) => e.includes('Invalid RichTextDocument AST'))).toBe(true);
+
+    // 4. Valid canonical RichTextDocument AST passes validation
+    const validAstDoc: IRichDocument = {
+      version: '1.0.0',
+      root: {
+        id: 'root',
+        type: 'root',
+        props: {},
+        children: [
+          {
+            id: 'text-valid-ast',
+            type: 'RichText',
+            props: {
+              content: {
+                type: 'doc',
+                content: [
+                  {
+                    type: 'paragraph',
+                    content: [
+                      { type: 'text', text: 'Hello ' },
+                      { type: 'text', text: 'world', marks: [{ type: 'bold' }] },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    const validAstResult = validateDocument(validAstDoc, { registry });
+    expect(validAstResult.valid).toBe(true);
+    expect(validAstResult.errors).toHaveLength(0);
   });
 });

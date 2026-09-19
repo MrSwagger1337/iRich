@@ -89,6 +89,7 @@ export function generateDocumentAIContext(
           for (const [fieldName, fieldDef] of Object.entries(comp.fields)) {
             const details: string[] = [`type: \`${fieldDef.type}\``];
             if (fieldDef.label) details.push(`label: "${fieldDef.label}"`);
+            if (fieldDef.description) details.push(`description: "${fieldDef.description}"`);
             if (fieldDef.defaultValue !== undefined) {
               details.push(`default: ${JSON.stringify(fieldDef.defaultValue)}`);
             }

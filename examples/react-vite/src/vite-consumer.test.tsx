@@ -10,7 +10,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createEditor, type IRichNode } from '@irich/core';
+import { createEditor, type IRichDocument, type IRichNode } from '@irich/core';
 import { IRichRenderer } from '@irich/renderer';
 import {
   IRichProvider,
@@ -261,9 +261,15 @@ describe('React + Vite Consumer Integration', () => {
     // Excludes internal structural node 'Column'
     expect(paletteItems.length).toBe(canonicalViteComponents.length - 1);
 
-    // Verify draggable attribute on palette items
+    // Verify draggable attribute on palette items and structured label/desc elements
     paletteItems.forEach((item) => {
       expect(item.getAttribute('draggable')).toBe('true');
+      const info = item.querySelector('.irich-palette-btn-info');
+      expect(info).not.toBeNull();
+      const label = item.querySelector('.irich-palette-btn-label');
+      expect(label).not.toBeNull();
+      const desc = item.querySelector('.irich-palette-btn-desc');
+      expect(desc).not.toBeNull();
     });
 
     editor.destroy();
@@ -321,6 +327,219 @@ describe('React + Vite Consumer Integration', () => {
     const textarea = container!.querySelector('.irich-json-studio-textarea') as HTMLTextAreaElement;
     expect(textarea).not.toBeNull();
     expect(textarea.value).toContain('"version": "1.0.0"');
+  });
+
+  it('enforces JSON Studio rejects invalid HTML strings in RichText and enables Apply for valid AST', async () => {
+    await act(async () => {
+      root!.render(<App />);
+    });
+
+    // Open JSON Studio modal
+    const studioBtn = Array.from(container!.querySelectorAll('button')).find(
+      (btn) => btn.textContent?.includes('View JSON State') || btn.textContent?.includes('Document JSON Studio')
+    );
+    expect(studioBtn).toBeDefined();
+
+    await act(async () => {
+      studioBtn!.click();
+    });
+
+    const textarea = container!.querySelector('.irich-json-studio-textarea') as HTMLTextAreaElement;
+    expect(textarea).not.toBeNull();
+
+    // 1. Invalid document with raw HTML string in RichText.props.content
+    const invalidDoc = {
+      version: '1.0.0',
+      root: {
+        id: 'root',
+        type: 'root',
+        props: {},
+        children: [
+          {
+            id: 'bad-rt',
+            type: 'RichText',
+            props: {
+              content: '<p>Hello</p>',
+            },
+          },
+        ],
+      },
+    };
+
+    await act(async () => {
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        'value'
+      )!.set!;
+      nativeInputValueSetter.call(textarea, JSON.stringify(invalidDoc, null, 2));
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      textarea.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    // Click "Validate" button
+    const validateBtn = Array.from(container!.querySelectorAll('button')).find(
+      (btn) => btn.textContent?.includes('Validate')
+    );
+    expect(validateBtn).toBeDefined();
+
+    await act(async () => {
+      validateBtn!.click();
+    });
+
+    // Validation fails: diagnostics panel is shown with error and Apply button is disabled
+    const diagnostics = container!.querySelector('[data-testid="irich-json-diagnostics"]');
+    expect(diagnostics).not.toBeNull();
+    expect(diagnostics!.textContent).toContain('Raw HTML or string is not allowed for RichText content');
+
+    const applyBtn = Array.from(container!.querySelectorAll('button')).find(
+      (btn) => btn.textContent?.includes('Apply Document') || btn.textContent?.includes('Apply Changes')
+    );
+    expect(applyBtn).toBeDefined();
+    expect((applyBtn as HTMLButtonElement).disabled).toBe(true);
+
+    // 2. Valid document with canonical RichTextDocument AST
+    const validDoc = {
+      version: '1.0.0',
+      root: {
+        id: 'root',
+        type: 'root',
+        props: {},
+        children: [
+          {
+            id: 'good-rt',
+            type: 'RichText',
+            props: {
+              content: {
+                type: 'doc',
+                content: [
+                  {
+                    type: 'paragraph',
+                    content: [
+                      { type: 'text', text: 'Hello ' },
+                      { type: 'text', text: 'world', marks: [{ type: 'bold' }] },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    await act(async () => {
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        'value'
+      )!.set!;
+      nativeInputValueSetter.call(textarea, JSON.stringify(validDoc, null, 2));
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      textarea.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    await act(async () => {
+      validateBtn!.click();
+    });
+
+    // Validation passes: diagnostics gone, valid banner shown, and Apply button is enabled
+    expect(container!.querySelector('[data-testid="irich-json-diagnostics"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="irich-json-valid-banner"]')).not.toBeNull();
+    expect((applyBtn as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('verifies RichText AST visual editor roundtrip and published rendering', async () => {
+    const registry = createViteRegistry();
+    const initialDoc: IRichDocument = {
+      version: '1.0.0',
+      root: {
+        id: 'root',
+        type: 'root',
+        props: {},
+        children: [
+          {
+            id: 'rt-roundtrip',
+            type: 'RichText',
+            props: {
+              content: {
+                type: 'doc',
+                content: [
+                  {
+                    type: 'paragraph',
+                    content: [
+                      { type: 'text', text: 'Hello ' },
+                      { type: 'text', text: 'world', marks: [{ type: 'bold' }] },
+                    ],
+                  },
+                ],
+              } as never,
+            },
+          },
+        ],
+      },
+    };
+
+    const editor = createEditor({
+      registry,
+      initialDocument: initialDoc,
+    });
+
+    await act(async () => {
+      root!.render(
+        <IRichProvider editor={editor}>
+          <EditorCanvas />
+        </IRichProvider>
+      );
+    });
+
+    // 1. Visual editor displays formatted text
+    expect(container!.textContent).toContain('Hello world');
+
+    // 2. Literal serialization strings are absent
+    expect(container!.textContent).not.toContain('<p>');
+    expect(container!.textContent).not.toContain('<strong>');
+    expect(container!.textContent).not.toContain('&ldquo;');
+
+    // 3. "world" has the expected bold semantic mark in editor DOM
+    const strongEl = container!.querySelector('strong');
+    expect(strongEl).not.toBeNull();
+    expect(strongEl!.textContent).toBe('world');
+
+    // 4. Edit prose via command write-back
+    const updatedAst = {
+      type: 'doc' as const,
+      content: [
+        {
+          type: 'paragraph' as const,
+          content: [
+            { type: 'text' as const, text: 'Updated ' },
+            { type: 'text' as const, text: 'editorial prose', marks: [{ type: 'italic' as const }] },
+          ],
+        },
+      ],
+    };
+
+    await act(async () => {
+      editor.commands.updateNode({
+        nodeId: 'rt-roundtrip',
+        props: { content: updatedAst as never },
+      });
+    });
+
+    // 5. Content remains an AST object in editor state
+    const currentDoc = editor.getDocument();
+    const rtNode = currentDoc.root.children?.[0];
+    expect(typeof rtNode?.props.content).toBe('object');
+    expect((rtNode?.props.content as Record<string, unknown>).type).toBe('doc');
+
+    // 6. Published renderer displays the updated formatted content
+    const publishedHtml = renderToString(
+      <IRichRenderer document={currentDoc} components={viteRenderers} />
+    );
+    expect(publishedHtml).toContain('Updated ');
+    expect(publishedHtml).toContain('<em>editorial prose</em>');
+    expect(publishedHtml).not.toContain('&lt;p&gt;');
+
+    editor.destroy();
   });
 
   it('isolates fixture storage between English and Arabic records', () => {

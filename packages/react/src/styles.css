@@ -53,6 +53,74 @@
   background: rgba(59, 130, 246, 0.05);
 }
 
+/* Palette Item Button & Drag Source */
+.irich-palette-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--irich-editor-surface, #1e293b);
+  border: 1px solid var(--irich-editor-border-muted, #334155);
+  border-radius: var(--irich-editor-radius-sm, 6px);
+  cursor: grab;
+  text-align: start;
+  color: var(--irich-editor-text, #f8fafc);
+  transition: all 0.15s ease;
+  user-select: none;
+  font-family: inherit;
+}
+
+.irich-palette-btn:hover {
+  border-color: var(--irich-editor-accent, #6366f1);
+  background: var(--irich-editor-surface-hover, #283548);
+}
+
+.irich-palette-btn:active {
+  cursor: grabbing;
+}
+
+.irich-palette-btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--irich-editor-radius-sm, 6px);
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.irich-palette-btn-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.irich-palette-btn-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--irich-editor-text, #f8fafc);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.irich-palette-btn-desc {
+  font-size: 0.6875rem;
+  color: var(--irich-editor-muted, #94a3b8);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .irich-palette-item-dragging {
   opacity: 0.5;
 }

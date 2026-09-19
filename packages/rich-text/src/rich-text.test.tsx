@@ -187,6 +187,38 @@ describe('Rich Text Subsystem (@irich/rich-text)', () => {
       expect(link?.textContent).toBe('Visit Website');
     });
 
+    it('neutralizes dangerous link URL schemes (javascript:, vbscript:, data:, blob:) to #', () => {
+      const doc: RichTextDocument = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: 'Dangerous JS Link',
+                marks: [{ type: 'link', attrs: { href: 'javascript:alert(1)' } }],
+              },
+              {
+                type: 'text',
+                text: 'Dangerous Data Link',
+                marks: [{ type: 'link', attrs: { href: 'data:text/html,<script>alert(1)</script>' } }],
+              },
+            ],
+          },
+        ],
+      };
+
+      act(() => {
+        root?.render(<IRichTextRenderer content={doc} />);
+      });
+
+      const links = container?.querySelectorAll('a');
+      expect(links).toHaveLength(2);
+      expect(links?.[0].getAttribute('href')).toBe('#');
+      expect(links?.[1].getAttribute('href')).toBe('#');
+    });
+
     it('renders lists, blockquotes, and code blocks', () => {
       const doc: RichTextDocument = {
         type: 'doc',

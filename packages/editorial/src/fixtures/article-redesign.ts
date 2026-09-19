@@ -4,7 +4,27 @@
  * ordinary flat CMS articles into rich editorial layouts.
  */
 
-import type { IRichDocument } from '@irich/core';
+import type { IRichDocument, JSONObject } from '@irich/core';
+
+/**
+ * Helper to construct a single-paragraph canonical RichTextDocument AST.
+ */
+function proseDoc(text: string): JSONObject {
+  return {
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        content: [
+          {
+            type: 'text',
+            text,
+          },
+        ],
+      },
+    ],
+  } as unknown as JSONObject;
+}
 
 /**
  * Document A: Ordinary flat CMS article.
@@ -36,8 +56,9 @@ export const flatArticleDocument: IRichDocument = {
         id: 'p-intro',
         type: 'RichText',
         props: {
-          content:
-            '<p>Traditional content management systems have long treated articles as blobs of unformatted HTML or disconnected paragraphs. This structure severely limits visual storytelling and responsiveness.</p>',
+          content: proseDoc(
+            'Traditional content management systems have long treated articles as blobs of unformatted HTML or disconnected paragraphs. This structure severely limits visual storytelling and responsiveness.',
+          ),
         },
       },
       {
@@ -64,8 +85,9 @@ export const flatArticleDocument: IRichDocument = {
         id: 'p-problem',
         type: 'RichText',
         props: {
-          content:
-            '<p>When content is stored as unstructured HTML strings, designers cannot adjust typography, margins, or responsive grid behavior without updating legacy database entries.</p>',
+          content: proseDoc(
+            'When content is stored as unstructured HTML strings, designers cannot adjust typography, margins, or responsive grid behavior without updating legacy database entries.',
+          ),
         },
       },
       {
@@ -82,8 +104,9 @@ export const flatArticleDocument: IRichDocument = {
         id: 'p-solution',
         type: 'RichText',
         props: {
-          content:
-            '<p>By representing editorial pages as pure JSON document trees with stable node IDs and semantic schemas, editorial systems decouple content semantics from host layout tokens.</p>',
+          content: proseDoc(
+            'By representing editorial pages as pure JSON document trees with stable node IDs and semantic schemas, editorial systems decouple content semantics from host layout tokens.',
+          ),
         },
       },
     ],
@@ -135,8 +158,9 @@ export const redesignedEditorialDocument: IRichDocument = {
                     id: 'text-intro-lead',
                     type: 'RichText',
                     props: {
-                      content:
-                        '<p>Traditional CMS platforms forced authors into rigid vertical stacks. Modern visual composition empowers authors to structure narrative depth without compromising semantic data integrity.</p>',
+                      content: proseDoc(
+                        'Traditional CMS platforms forced authors into rigid vertical stacks. Modern visual composition empowers authors to structure narrative depth without compromising semantic data integrity.',
+                      ),
                     },
                   },
                   {
@@ -148,8 +172,25 @@ export const redesignedEditorialDocument: IRichDocument = {
                         id: 'callout-text',
                         type: 'RichText',
                         props: {
-                          content:
-                            '<p><strong>Editorial Principle:</strong> Content structure describes narrative intent; design systems govern visual rendering.</p>',
+                          content: {
+                            type: 'doc',
+                            content: [
+                              {
+                                type: 'paragraph',
+                                content: [
+                                  {
+                                    type: 'text',
+                                    text: 'Editorial Principle:',
+                                    marks: [{ type: 'bold' }],
+                                  },
+                                  {
+                                    type: 'text',
+                                    text: ' Content structure describes narrative intent; design systems govern visual rendering.',
+                                  },
+                                ],
+                              },
+                            ],
+                          } as unknown as JSONObject,
                         },
                       },
                     ],
@@ -191,8 +232,9 @@ export const redesignedEditorialDocument: IRichDocument = {
             id: 'quote-body',
             type: 'RichText',
             props: {
-              content:
-                '<p>&ldquo;Separating content semantics from presentation rules ensures documents survive the evolution of devices, viewports, and platforms.&rdquo;</p>',
+              content: proseDoc(
+                '“Separating content semantics from presentation rules ensures documents survive the evolution of devices, viewports, and platforms.”',
+              ),
             },
           },
         ],
@@ -211,8 +253,9 @@ export const redesignedEditorialDocument: IRichDocument = {
             id: 'takeaway-body',
             type: 'RichText',
             props: {
-              content:
-                '<p>Structured JSON trees enable external AI agents to reliably analyze and redesign complex editorial layouts without introducing invalid HTML, script tags, or broken markup.</p>',
+              content: proseDoc(
+                'Structured JSON trees enable external AI agents to reliably analyze and redesign complex editorial layouts without introducing invalid HTML, script tags, or broken markup.',
+              ),
             },
           },
         ],
@@ -246,8 +289,9 @@ export const redesignedEditorialDocument: IRichDocument = {
                     id: 'card-1-text',
                     type: 'RichText',
                     props: {
-                      content:
-                        '<p>Document state is 100% JSON serializable with stable node IDs and strict prop validation.</p>',
+                      content: proseDoc(
+                        'Document state is 100% JSON serializable with stable node IDs and strict prop validation.',
+                      ),
                     },
                   },
                 ],
@@ -266,8 +310,9 @@ export const redesignedEditorialDocument: IRichDocument = {
                     id: 'card-2-text',
                     type: 'RichText',
                     props: {
-                      content:
-                        '<p>Production rendering needs only lightweight React renderers with zero editor controllers.</p>',
+                      content: proseDoc(
+                        'Production rendering needs only lightweight React renderers with zero editor controllers.',
+                      ),
                     },
                   },
                 ],
@@ -286,8 +331,9 @@ export const redesignedEditorialDocument: IRichDocument = {
                     id: 'card-3-text',
                     type: 'RichText',
                     props: {
-                      content:
-                        '<p>Logical CSS properties ensure seamless English and Arabic bi-directional layout integrity.</p>',
+                      content: proseDoc(
+                        'Logical CSS properties ensure seamless English and Arabic bi-directional layout integrity.',
+                      ),
                     },
                   },
                 ],
@@ -310,8 +356,9 @@ export const redesignedEditorialDocument: IRichDocument = {
             id: 'cta-text',
             type: 'RichText',
             props: {
-              content:
-                '<p>Experience the power of semantic component composition in the interactive iRich visual workbench.</p>',
+              content: proseDoc(
+                'Experience the power of semantic component composition in the interactive iRich visual workbench.',
+              ),
             },
           },
           {
@@ -374,8 +421,9 @@ export const arabicEditorialDocument: IRichDocument = {
                     id: 'text-ar-lead',
                     type: 'RichText',
                     props: {
-                      content:
-                        '<p>تعتمد أنظمة إدارة المحتوى الحديثة على تجريد المقالات وتحويلها إلى شجرة مكونات تركيبية قابلة للتحويل والتطوير، بدلاً من حفظ نصوص HTML جامدة تعيق التناسق البصري.</p>',
+                      content: proseDoc(
+                        'تعتمد أنظمة إدارة المحتوى الحديثة على تجريد المقالات وتحويلها إلى شجرة مكونات تركيبية قابلة للتحويل والتطوير، بدلاً من حفظ نصوص HTML جامدة تعيق التناسق البصري.',
+                      ),
                     },
                   },
                   {
@@ -387,8 +435,25 @@ export const arabicEditorialDocument: IRichDocument = {
                         id: 'callout-ar-text',
                         type: 'RichText',
                         props: {
-                          content:
-                            '<p><strong>مبدأ تحريري:</strong> هيكل الوثيقة يحدد القيمة التحريرية، بينما يتولى نظام التصميم تقديمها للمستخدم.</p>',
+                          content: {
+                            type: 'doc',
+                            content: [
+                              {
+                                type: 'paragraph',
+                                content: [
+                                  {
+                                    type: 'text',
+                                    text: 'مبدأ تحريري:',
+                                    marks: [{ type: 'bold' }],
+                                  },
+                                  {
+                                    type: 'text',
+                                    text: ' هيكل الوثيقة يحدد القيمة التحريرية، بينما يتولى نظام التصميم تقديمها للمستخدم.',
+                                  },
+                                ],
+                              },
+                            ],
+                          } as unknown as JSONObject,
                         },
                       },
                     ],
@@ -430,8 +495,9 @@ export const arabicEditorialDocument: IRichDocument = {
             id: 'quote-ar-body',
             type: 'RichText',
             props: {
-              content:
-                '<p>&laquo;فصل دلالات المحتوى عن قواعد العرض يضمن بقاء الوثائق صالحة ومقروءة عبر مختلف المنصات والأجهزة.&raquo;</p>',
+              content: proseDoc(
+                '«فصل دلالات المحتوى عن قواعد العرض يضمن بقاء الوثائق صالحة ومقروءة عبر مختلف المنصات والأجهزة.»',
+              ),
             },
           },
         ],
@@ -450,8 +516,9 @@ export const arabicEditorialDocument: IRichDocument = {
             id: 'takeaway-ar-body',
             type: 'RichText',
             props: {
-              content:
-                '<p>تتيح بنية JSON التركيبية لنماذج الذكاء الاصطناعي الخارجية إعادة هيكلة المقالات بدقة كاملة دون إدخال أكواد برمجية غير آمنة أو كسر قواعد التنسيق.</p>',
+              content: proseDoc(
+                'تتيح بنية JSON التركيبية لنماذج الذكاء الاصطناعي الخارجية إعادة هيكلة المقالات بدقة كاملة دون إدخال أكواد برمجية غير آمنة أو كسر قواعد التنسيق.',
+              ),
             },
           },
         ],
@@ -485,8 +552,9 @@ export const arabicEditorialDocument: IRichDocument = {
                     id: 'card-ar-1-text',
                     type: 'RichText',
                     props: {
-                      content:
-                        '<p>حالة الوثيقة بالكامل قابلة للتسلسل إلى JSON قياسي مع معرفات عقد فريدة وثابتة.</p>',
+                      content: proseDoc(
+                        'حالة الوثيقة بالكامل قابلة للتسلسل إلى JSON قياسي مع معرفات عقد فريدة وثابتة.',
+                      ),
                     },
                   },
                 ],
@@ -505,8 +573,9 @@ export const arabicEditorialDocument: IRichDocument = {
                     id: 'card-ar-2-text',
                     type: 'RichText',
                     props: {
-                      content:
-                        '<p>استخدام الخصائص المنطقية في CSS يضمن اتساق التخطيط والمحاذاة لكلا اللغتين العربية والإنجليزية.</p>',
+                      content: proseDoc(
+                        'استخدام الخصائص المنطقية في CSS يضمن اتساق التخطيط والمحاذاة لكلا اللغتين العربية والإنجليزية.',
+                      ),
                     },
                   },
                 ],
@@ -525,8 +594,9 @@ export const arabicEditorialDocument: IRichDocument = {
                     id: 'card-ar-3-text',
                     type: 'RichText',
                     props: {
-                      content:
-                        '<p>محرك العرض خفيف الوزن ويدعم الرندرة في الخادم (SSR) دون تحميل مكتبات المحرر التفاعلي.</p>',
+                      content: proseDoc(
+                        'محرك العرض خفيف الوزن ويدعم الرندرة في الخادم (SSR) دون تحميل مكتبات المحرر التفاعلي.',
+                      ),
                     },
                   },
                 ],
@@ -549,8 +619,9 @@ export const arabicEditorialDocument: IRichDocument = {
             id: 'cta-ar-text',
             type: 'RichText',
             props: {
-              content:
-                '<p>جرب الآن المحرر المرئي التفاعلي واستمتع بتجربة تحرير متكاملة وسلسة.</p>',
+              content: proseDoc(
+                'جرب الآن المحرر المرئي التفاعلي واستمتع بتجربة تحرير متكاملة وسلسة.',
+              ),
             },
           },
           {

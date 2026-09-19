@@ -11,6 +11,7 @@ import {
   type ComponentRegistry,
   type FieldDefinition,
 } from '@irich/core';
+import { isRichTextDocument } from '@irich/rich-text';
 import { isSafeHref, isSafeImageSrc } from './security';
 
 /**
@@ -428,10 +429,21 @@ export const RichTextComponent = defineComponent({
   type: 'RichText',
   label: 'Rich Text',
   category: 'Typography',
-  description: 'Multi-line formatted rich text block supporting inline styles and paragraphs.',
+  description:
+    'Multi-line formatted rich text block. RichText props.content MUST be a canonical RichTextDocument AST object ({ type: "doc", content: [...] }). Raw HTML strings are strictly invalid.',
   icon: 'file-text',
   canHaveChildren: false,
   fields: {
+    content: {
+      type: 'richtext',
+      label: 'Rich Text Document',
+      description:
+        'Canonical RichTextDocument AST object ({ type: "doc", content: [...] }). Supports paragraphs, text nodes, and marks (bold, italic, strike, code, link). Raw HTML strings are forbidden.',
+      defaultValue: {
+        type: 'doc',
+        content: [{ type: 'paragraph' }],
+      },
+    },
     placeholder: {
       type: 'text',
       label: 'Placeholder Text',
@@ -509,7 +521,7 @@ export const editorialDefinitions: readonly ComponentDefinition[] = [
 
 /**
  * Creates a pre-populated ComponentRegistry configured with all canonical editorial component
- * definitions and strict URL security validation handlers.
+ * definitions and strict URL & RichText AST security validation handlers.
  */
 export function createEditorialRegistry(): ComponentRegistry {
   const registry = createComponentRegistry();
@@ -546,6 +558,41 @@ export function createEditorialRegistry(): ComponentRegistry {
       }
 
       return { valid: true };
+    },
+  });
+
+  // Register strict RichText AST validation rejecting raw strings/HTML
+  registry.registerFieldType({
+    type: 'richtext',
+    validate(value: unknown) {
+      if (value === undefined || value === null) {
+        return { valid: true };
+      }
+      if (typeof value === 'string') {
+        return {
+          valid: false,
+          error: `Raw HTML or string is not allowed for RichText content. Must be a canonical RichTextDocument AST object ({ type: "doc", content: [...] }).`,
+        };
+      }
+      if (typeof value !== 'object' || Array.isArray(value)) {
+        return {
+          valid: false,
+          error: `Expected a RichTextDocument AST object, got ${typeof value}.`,
+        };
+      }
+      if (!isRichTextDocument(value)) {
+        return {
+          valid: false,
+          error: `Invalid RichTextDocument AST. Root object must have type: "doc" and content array.`,
+        };
+      }
+      return { valid: true };
+    },
+    getDefaultValue() {
+      return {
+        type: 'doc',
+        content: [{ type: 'paragraph' }],
+      };
     },
   });
 

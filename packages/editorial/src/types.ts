@@ -3,6 +3,8 @@
  * Component prop interfaces and type definitions for canonical editorial vocabulary.
  */
 
+import type { RichTextDocument } from '@irich/rich-text';
+
 export interface SectionProps {
   variant?: 'default' | 'muted' | 'accent';
   spacing?: 'normal' | 'compact' | 'spacious';
@@ -65,6 +67,7 @@ export interface HeadingProps {
 }
 
 export interface RichTextProps {
+  content?: RichTextDocument;
   placeholder?: string;
 }
 

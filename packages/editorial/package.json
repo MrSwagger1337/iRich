@@ -50,7 +50,8 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@irich/core": "workspace:*"
+    "@irich/core": "workspace:*",
+    "@irich/rich-text": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

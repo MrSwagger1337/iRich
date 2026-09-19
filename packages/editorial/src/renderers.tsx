@@ -7,6 +7,7 @@
 
 import type { FC, ReactNode } from 'react';
 import type { IRichNode } from '@irich/core';
+import { IRichTextRenderer, type RichTextDocument } from '@irich/rich-text';
 import { sanitizeHref, sanitizeImageSrc } from './security';
 import type {
   ButtonProps,
@@ -382,7 +383,7 @@ export const HeadingRenderer: FC<HeadingProps & EditorialRendererProps> = ({
 };
 
 /**
- * 13. RichText Renderer (Published HTML Prose)
+ * 13. RichText Renderer (Semantic Pure AST-to-JSX Prose)
  */
 export const RichTextRenderer: FC<RichTextProps & EditorialRendererProps> = ({
   node,
@@ -391,30 +392,21 @@ export const RichTextRenderer: FC<RichTextProps & EditorialRendererProps> = ({
   dir,
   lang,
 }) => {
-  const htmlContent = (node.props.content as string) || (node.props.html as string);
-
-  if (htmlContent) {
-    return (
-      <div
-        id={id}
-        dir={dir}
-        lang={lang}
-        className="irich-editorial-richtext irich-editorial-prose"
-        data-irich-editorial="richtext"
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
-      />
-    );
-  }
+  const content = node.props.content as unknown as RichTextDocument | undefined;
 
   return (
     <div
       id={id}
       dir={dir}
       lang={lang}
-      className="irich-editorial-richtext irich-editorial-prose irich-editorial-empty"
+      className="irich-editorial-richtext irich-editorial-prose"
       data-irich-editorial="richtext"
     >
-      <p className="irich-editorial-placeholder">{placeholder}</p>
+      {content ? (
+        <IRichTextRenderer content={content} dir={dir} lang={lang} />
+      ) : (
+        <p className="irich-editorial-placeholder">{placeholder}</p>
+      )}
     </div>
   );
 };

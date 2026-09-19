@@ -122,4 +122,63 @@ describe('@irich/editorial React Component Renderers (SSR / IRichRenderer)', () 
       expect(components[type], `Missing renderer in editorialComponentMap for "${type}"`).toBeDefined();
     }
   });
+
+  it('renders RichText AST with semantic marks without literal HTML strings or dangerous links', () => {
+    const docWithRichText: IRichDocument = {
+      version: '1.0.0',
+      root: {
+        id: 'root',
+        type: 'root',
+        props: {},
+        children: [
+          {
+            id: 'rt-1',
+            type: 'RichText',
+            props: {
+              content: {
+                type: 'doc',
+                content: [
+                  {
+                    type: 'paragraph',
+                    content: [
+                      { type: 'text', text: 'Hello ' },
+                      { type: 'text', text: 'world', marks: [{ type: 'bold' }] },
+                      { type: 'text', text: ' and ' },
+                      {
+                        type: 'text',
+                        text: 'safe link',
+                        marks: [{ type: 'link', attrs: { href: 'https://example.com' } }],
+                      },
+                      { type: 'text', text: ' and ' },
+                      {
+                        type: 'text',
+                        text: 'unsafe link',
+                        marks: [{ type: 'link', attrs: { href: 'javascript:alert(1)' } }],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    const html = renderToString(
+      <IRichRenderer document={docWithRichText} components={components} />
+    );
+
+    // Formatted semantics
+    expect(html).toContain('<strong>world</strong>');
+    expect(html).toContain('href="https://example.com"');
+
+    // Dangerous link mark neutralized
+    expect(html).not.toContain('javascript:alert(1)');
+    expect(html).toContain('href="#"');
+
+    // No raw serialized markup
+    expect(html).not.toContain('&lt;p&gt;');
+    expect(html).not.toContain('&lt;strong&gt;');
+  });
 });
