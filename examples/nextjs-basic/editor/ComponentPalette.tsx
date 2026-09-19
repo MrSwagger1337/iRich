@@ -20,6 +20,7 @@ export function ComponentPalette() {
     }
 
     for (const comp of canonicalComponentDefinitions) {
+      if (comp.type === 'Column') continue;
       const cat = comp.category || 'Other';
       if (!map.has(cat)) {
         map.set(cat, []);

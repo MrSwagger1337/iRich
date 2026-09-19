@@ -1,90 +1,163 @@
 # iRich React + Vite Example
 
-> Standalone single-page application (SPA) demonstrating **iRich** integration with **Vite 6** and **React 19**, verifying that iRich operates natively with **zero Next.js dependencies**.
+> Lightweight single-page application (SPA) demonstrating the integration of **iRich** with **Vite 6** and **React 19**, verifying that iRich operates natively with **zero Next.js dependencies**.
 
 ---
 
-## Overview
+## 1. Overview
 
 This example demonstrates how an external client-side React application consumes iRich packages directly from a standard Vite workspace.
 
-### Demonstrated Capabilities
-
-1. **Framework-Independent Component Registration**:
-   - Custom component definitions declared via `defineComponent` in [`src/components/definitions.ts`](./src/components/definitions.ts).
-   - Component registry created via `createComponentRegistry()`.
-   - Responsive field schemas (`padding`, `align`, etc.) defined with multi-breakpoint fallback support.
-
-2. **Decoupled Production Rendering**:
-   - Published pages render documents using `<IRichRenderer />` from `@irich/renderer`.
-   - Lightweight, standalone rendering with **zero** visual editor or inspector JavaScript loaded on the published page.
-
-3. **Interactive Visual Studio Editor**:
-   - Three-pane visual studio layout with component palette, interactive canvas, and `<IRichInspector />`.
-   - Component drag/click insertion with automatic default props initialization.
-   - Dynamic schema-driven property inspector modifying node props in real-time through `editor.commands.updateNode()`.
-   - Responsive viewport switcher (Desktop, Tablet, Mobile) with live responsive prop previewing.
-   - Productivity keyboard shortcuts (`Cmd/Ctrl+Z`, `Cmd/Ctrl+Shift+Z`, `Cmd/Ctrl+C`, `Cmd/Ctrl+V`, `Cmd/Ctrl+D`, `Delete`).
-
-4. **Persistence & Autosave**:
-   - Real-time debounced persistence to browser `localStorage` via `LocalStorageAdapter` and `useIRichAutosave()`.
-   - Interactive JSON Drawer supporting full export and live import of canonical JSON documents.
+It uses the same canonical visual editing architecture, drag-and-drop subsystem, RichText editor, and JSON Studio modal established across iRich.
 
 ---
 
-## Architectural Verification: Zero Next.js Coupling
+## 2. Quick Integration Walkthrough
 
-A primary design requirement of iRich (Principle #1 and #3 in `AGENTS.md`) is that `@irich/core`, `@irich/renderer`, `@irich/react`, `@irich/rich-text`, and `@irich/ui` must **never require or depend on Next.js**.
+### Step 1: Install Packages
 
-This project verifies:
-- Production bundle builds cleanly via standard Vite and Rollup (`vite build`).
-- TypeScript typechecks with `tsc --noEmit` without any Next.js ambient types or runtimes.
-- No compatibility shims or polyfills needed in `@irich/core`.
+```bash
+pnpm add @irich/core @irich/react @irich/renderer @irich/rich-text @irich/ui
+```
+
+### Step 2: Define and Register Components
+
+Declare framework-independent components and register them with `@irich/core`:
+
+```tsx
+import { createComponentRegistry, defineComponent } from '@irich/core';
+
+export const CardComponent = defineComponent({
+  type: 'Card',
+  label: 'Feature Card',
+  category: 'Marketing',
+  fields: {
+    title: { type: 'text', label: 'Title', defaultValue: 'Card Title' },
+    description: { type: 'textarea', label: 'Description', defaultValue: 'Card text...' },
+  },
+});
+
+export function createRegistry() {
+  const registry = createComponentRegistry();
+  registry.register(CardComponent);
+  return registry;
+}
+```
+
+### Step 3: Create Initial Document and Editor
+
+```tsx
+import { createDocument, createEditor } from '@irich/core';
+
+const document = createDocument({
+  metadata: { title: 'My Document', locale: 'en', direction: 'ltr' },
+  root: { id: 'root', type: 'root', children: [] },
+});
+
+const editor = createEditor({
+  registry: createRegistry(),
+  initialDocument: document,
+});
+```
+
+### Step 4: Visual Editor Studio (`<IRichProvider>` + `<IRichCanvas>`)
+
+```tsx
+import {
+  IRichProvider,
+  IRichCanvas,
+  IRichPaletteItem,
+  IRichInspector,
+  IRichDocumentJsonModal,
+} from '@irich/react';
+
+export function EditorApp({ editor }) {
+  return (
+    <IRichProvider editor={editor}>
+      <div className="editor-shell">
+        <aside>
+          <IRichPaletteItem componentType="Card" label="Feature Card" />
+        </aside>
+
+        <main>
+          <IRichCanvas components={renderers} />
+        </main>
+
+        <aside>
+          <IRichInspector />
+        </aside>
+      </div>
+    </IRichProvider>
+  );
+}
+```
+
+### Step 5: Published View (`<IRichRenderer>`)
+
+Rendering the published page requires **zero** editor code, canvas controllers, or DnD mechanics:
+
+```tsx
+import { IRichRenderer } from '@irich/renderer';
+
+export function PublishedPage({ document }) {
+  return <IRichRenderer document={document} components={renderers} />;
+}
+```
 
 ---
 
-## Project Structure
+## 3. Cross-Framework Comparison: Next.js vs. React + Vite
+
+| Feature / System | Next.js (`examples/nextjs-basic`) | React + Vite (`examples/react-vite`) | Parity Status |
+| :--- | :--- | :--- | :--- |
+| **Document State** | Canonical `IRichDocument` JSON | Canonical `IRichDocument` JSON | **Identical** |
+| **Component Registry** | `@irich/core` schema registry | `@irich/core` schema registry | **Identical** |
+| **Editor Context** | `<IRichProvider editor={editor}>` | `<IRichProvider editor={editor}>` | **Identical** |
+| **Visual Canvas** | `<IRichCanvas />` from `@irich/react` | `<IRichCanvas />` from `@irich/react` | **Identical** |
+| **Drag and Drop** | Phase 4 canonical DnD engine | Phase 4 canonical DnD engine | **Identical** |
+| **RichText Integration**| `IRichTextEditor` + toolbar | `IRichTextEditor` + toolbar | **Identical** |
+| **JSON Studio** | `IRichDocumentJsonModal` | `IRichDocumentJsonModal` | **Identical** |
+| **RTL / Multilingual** | `useIRichUIDirection()` + Bidi | `useIRichUIDirection()` + Bidi | **Identical** |
+| **Published Rendering** | SSR Server Components (`@irich/renderer`) | Client SPA Component (`@irich/renderer`) | **Clean Separation** |
+| **Routing / Server** | App Router (`page.tsx`, `layout.tsx`) | Single-page App (`App.tsx`) | **Framework-Specific** |
+
+---
+
+## 4. Project Structure
 
 ```
 examples/react-vite/
 ├── src/
 │   ├── components/
-│   │   ├── definitions.ts       # iRich component definitions & registry (Hero, Card, Alert, Container, RichText, Heading, Button)
-│   │   ├── renderers.tsx         # Standalone React renderers for components
-│   │   └── sample-document.ts   # Canonical initial JSON document
-│   ├── App.tsx                  # Main SPA switching between Live Published Preview and Visual Studio
-│   ├── main.tsx                 # Vite React entrypoint
-│   └── index.css                # Vite-themed dark-mode stylesheet
-├── index.html                   # HTML entry
-├── vite.config.ts               # Vite 6 configuration
+│   │   ├── definitions.ts              # Component schemas & registry
+│   │   ├── renderers.tsx                # Pure presentational component renderers
+│   │   ├── sample-document.ts          # English LTR canonical fixture
+│   │   └── sample-document-arabic.ts   # Arabic RTL canonical fixture
+│   ├── editor/
+│   │   ├── EditorStudio.tsx            # 3-pane visual editor shell
+│   │   ├── EditorCanvas.tsx            # Visual canvas using canonical IRichCanvas
+│   │   ├── EditorToolbar.tsx           # Toolbar with breakpoints, undo/redo, fixture switch
+│   │   └── ComponentPalette.tsx        # Palette sidebar using IRichPaletteItem
+│   ├── App.tsx                         # Main SPA router switching Published / Editor modes
+│   ├── index.css                       # Dark theme & canvas styling
+│   ├── main.tsx                        # React 19 entrypoint
+│   └── vite-consumer.test.tsx          # Automated verification tests
+├── vite.config.ts
 ├── package.json
 └── tsconfig.json
 ```
 
 ---
 
-## Running the Example
-
-### Development Mode
-
-Start the Vite dev server with hot-module replacement (HMR):
+## 5. Running and Building
 
 ```bash
+# Start development server
 pnpm --filter example-react-vite dev
-```
 
-Then open `http://localhost:5173` in your browser.
-
-### Production Build
-
-Run the TypeScript typecheck and Vite production build:
-
-```bash
+# Typecheck and production bundle build
 pnpm --filter example-react-vite build
-```
 
-Preview the production build locally:
-
-```bash
-pnpm --filter example-react-vite preview
+# Run consumer tests
+pnpm --filter example-react-vite test
 ```

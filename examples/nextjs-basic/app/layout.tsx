@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import '@irich/react/styles.css';
+import '@irich/editorial/styles.css';
 import './globals.css';
 
 export const metadata: Metadata = {

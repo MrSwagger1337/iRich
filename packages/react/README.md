@@ -18,16 +18,17 @@
 
 \`\`\`bash
 pnpm add @irich/core @irich/react @irich/renderer
-\`\`\`
+```
 
 ---
 
 ## Basic Usage
 
-\`\`\`tsx
+```tsx
 import { useMemo } from 'react';
 import { createEditor, createComponentRegistry, createDocument } from '@irich/core';
 import { IRichProvider, IRichInspector } from '@irich/react';
+import '@irich/react/styles.css';
 
 export function Studio() {
   const editor = useMemo(() => {

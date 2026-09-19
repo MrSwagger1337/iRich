@@ -291,6 +291,9 @@ importers:
       '@irich/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@irich/editorial':
+        specifier: workspace:*
+        version: link:../../packages/editorial
       '@irich/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
@@ -334,6 +337,9 @@ importers:
       '@irich/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@irich/editorial':
+        specifier: workspace:*
+        version: link:../../packages/editorial
       '@irich/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
@@ -374,6 +380,37 @@ importers:
 
   packages/core:
     devDependencies:
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(postcss@8.5.28)(supports-color@7.2.0)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.5
+        version: 3.2.7(@types/node@22.20.3)(jsdom@30.0.1)(supports-color@7.2.0)
+
+  packages/editorial:
+    dependencies:
+      '@irich/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@irich/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@types/react':
+        specifier: ^19.0.10
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.4
+        version: 19.3.0(@types/react@19.3.0)
+      react:
+        specifier: ^19.0.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.3.0(react@19.3.0)
       tsup:
         specifier: ^8.3.6
         version: 8.5.1(postcss@8.5.28)(supports-color@7.2.0)(typescript@5.9.3)
